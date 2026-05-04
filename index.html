@@ -1,0 +1,1718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Equipment Maintenance Management System</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+  .sidebar-link.active { background:#1e40af; color:#fff; }
+  .sidebar-link:hover { background:#1e3a8a; color:#fff; }
+  .badge { padding:2px 8px; border-radius:9999px; font-size:11px; font-weight:600; }
+  .b-green{background:#dcfce7;color:#166534}
+  .b-red{background:#fee2e2;color:#991b1b}
+  .b-yellow{background:#fef9c3;color:#854d0e}
+  .b-blue{background:#dbeafe;color:#1e40af}
+  .b-gray{background:#e5e7eb;color:#374151}
+  .b-purple{background:#f3e8ff;color:#6b21a8}
+  .b-orange{background:#ffedd5;color:#9a3412}
+  .b-indigo{background:#e0e7ff;color:#3730a3}
+  table { width:100%; border-collapse:collapse; }
+  th { text-align:left; font-size:12px; text-transform:uppercase; letter-spacing:0.05em; color:#6b7280; padding:10px 12px; border-bottom:1px solid #e5e7eb; background:#f9fafb;}
+  td { padding:10px 12px; border-bottom:1px solid #f3f4f6; font-size:13px; vertical-align:middle;}
+  tr:hover td { background:#f9fafb; }
+  .modal-bg { background:rgba(0,0,0,0.5); }
+  input, select, textarea { font-size: 14px; }
+  .scrollbar::-webkit-scrollbar{width:8px;height:8px}
+  .scrollbar::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}
+  .kpi-card { cursor:pointer; transition:all 0.15s; }
+  .kpi-card:hover { transform:translateY(-2px); box-shadow:0 8px 25px rgba(0,0,0,0.12); }
+  .progress-bar { transition: width 0.6s ease; }
+  @media print {
+    #loginScreen, aside, header, #notifPanel, #modal, .no-print { display:none !important; }
+    #appScreen { display:block !important; }
+    main { overflow:visible !important; }
+    #pageContent { overflow:visible !important; padding:0 !important; }
+    body { background:white; }
+    .bg-white { box-shadow:none !important; border:1px solid #e5e7eb !important; }
+    @page { margin:15mm; }
+  }
+</style>
+</head>
+<body class="bg-slate-50">
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-blue-700 to-indigo-800 p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+    <div class="text-center mb-6">
+      <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-2xl mb-4">
+        <svg class="w-9 h-9 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-900">Equipment Maintenance</h1>
+      <p class="text-gray-500 text-sm mt-1">Management System</p>
+    </div>
+    <div class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+        <input id="loginUser" type="text" placeholder="admin" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"/>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+        <input id="loginPass" type="password" placeholder="admin123" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" onkeydown="if(event.key==='Enter')doLogin()"/>
+      </div>
+      <button onclick="doLogin()" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2.5 rounded-lg transition">Sign In</button>
+      <div id="loginError" class="text-red-600 text-sm text-center hidden">Invalid credentials</div>
+    </div>
+    <div class="mt-6 pt-6 border-t border-gray-200">
+      <p class="text-xs text-gray-500 text-center mb-3 font-semibold">Demo Accounts</p>
+      <div class="grid grid-cols-2 gap-2 text-xs">
+        <button onclick="quickLogin('admin','admin123')" class="bg-gray-100 hover:bg-gray-200 px-2 py-2 rounded text-left"><b>Admin</b><br/>admin / admin123</button>
+        <button onclick="quickLogin('tech','tech123')" class="bg-gray-100 hover:bg-gray-200 px-2 py-2 rounded text-left"><b>Technician</b><br/>tech / tech123</button>
+        <button onclick="quickLogin('viewer','view123')" class="bg-gray-100 hover:bg-gray-200 px-2 py-2 rounded text-left"><b>Viewer</b><br/>viewer / view123</button>
+        <button onclick="quickLogin('hod','hod123')" class="bg-gray-100 hover:bg-gray-200 px-2 py-2 rounded text-left"><b>HOD</b><br/>hod / hod123</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="appScreen" class="hidden min-h-screen flex">
+  <!-- SIDEBAR -->
+  <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col flex-shrink-0">
+    <div class="p-5 border-b border-slate-800">
+      <h1 class="text-white font-bold text-lg">EMMS</h1>
+      <p class="text-xs text-slate-400">Maintenance Management</p>
+    </div>
+    <nav id="sideNav" class="flex-1 p-3 space-y-0.5 overflow-y-auto scrollbar text-sm"></nav>
+    <div class="p-3 border-t border-slate-800">
+      <div class="flex items-center gap-3 px-2 py-2">
+        <div id="userAvatar" class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0"></div>
+        <div class="flex-1 min-w-0">
+          <p id="userName" class="text-sm font-medium text-white truncate"></p>
+          <p id="userRole" class="text-xs text-slate-400 truncate"></p>
+        </div>
+      </div>
+      <button onclick="logout()" class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-slate-800 text-slate-300 mt-1">Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="flex-1 flex flex-col overflow-hidden">
+    <header class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between no-print">
+      <div>
+        <h2 id="pageTitle" class="text-xl font-bold text-gray-900">Dashboard</h2>
+        <p id="pageSubtitle" class="text-xs text-gray-500"></p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="exportPagePDF()" class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Export PDF
+        </button>
+        <div class="relative">
+          <button onclick="toggleNotifPanel()" class="relative p-2 rounded-lg hover:bg-gray-100">
+            <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+            <span id="notifBadge" class="absolute top-0.5 right-0.5 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold" style="font-size:10px">0</span>
+          </button>
+        </div>
+      </div>
+    </header>
+    <div id="pageContent" class="flex-1 overflow-y-auto p-6 scrollbar"></div>
+  </main>
+
+  <!-- NOTIFICATION PANEL -->
+  <div id="notifPanel" class="hidden fixed top-14 right-6 w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-40 max-h-[75vh] overflow-y-auto scrollbar no-print">
+    <div class="p-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
+      <h3 class="font-bold text-gray-900">Alerts & Notifications</h3>
+      <button onclick="toggleNotifPanel()" class="text-gray-400 hover:text-gray-600">✕</button>
+    </div>
+    <div class="p-3 border-b border-gray-100 flex gap-2 sticky top-14 bg-white">
+      <button onclick="filterNotif('all')" id="nfAll" class="px-3 py-1 text-xs rounded-full bg-gray-800 text-white font-semibold">All</button>
+      <button onclick="filterNotif('pm')" id="nfPM" class="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-600 font-semibold">PM</button>
+      <button onclick="filterNotif('cal')" id="nfCAL" class="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-600 font-semibold">CAL</button>
+      <button onclick="filterNotif('other')" id="nfOther" class="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-600 font-semibold">Other</button>
+    </div>
+    <div id="notifList" class="divide-y divide-gray-100"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="modal" class="hidden fixed inset-0 modal-bg z-50 flex items-center justify-center p-4 no-print">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto scrollbar">
+    <div class="p-5 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white z-10">
+      <h3 id="modalTitle" class="text-lg font-bold text-gray-900"></h3>
+      <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+    </div>
+    <div id="modalBody" class="p-5"></div>
+  </div>
+</div>
+
+<script>
+/* ================= STORAGE ================= */
+const LS_KEY = 'emms_data_v2';
+const SESSION_KEY = 'emms_session_v2';
+
+function daysAgo(n){ const d=new Date(); d.setDate(d.getDate()-n); return d.toISOString().slice(0,10); }
+function daysFromNow(n){ const d=new Date(); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function diffDays(date){ if(!date)return 9999; return Math.ceil((new Date(date)-new Date())/(1000*60*60*24)); }
+function fmtCost(v){ return '₹'+(Number(v)||0).toLocaleString('en-IN'); }
+function nowISO(){ return new Date().toISOString(); }
+
+const SEED = {
+  users: [
+    { id:'u1', username:'admin', password:'admin123', name:'System Admin', role:'Admin', email:'admin@company.com' },
+    { id:'u2', username:'tech', password:'tech123', name:'Ravi Kumar', role:'Maintenance', email:'ravi@company.com' },
+    { id:'u3', username:'viewer', password:'view123', name:'Audit Viewer', role:'Viewer', email:'audit@company.com' },
+    { id:'u4', username:'hod', password:'hod123', name:'Priya Sharma', role:'HOD', email:'priya@company.com' },
+  ],
+  technicians: [
+    { id:'T-001', name:'Ravi Kumar', phone:'9876543210', dept:'Mechanical' },
+    { id:'T-002', name:'Suresh Patel', phone:'9765432109', dept:'Electrical' },
+    { id:'T-003', name:'Anand Singh', phone:'9654321098', dept:'Instrumentation' },
+    { id:'T-004', name:'Mohan Das', phone:'9543210987', dept:'Civil' },
+  ],
+  equipment: [
+    { id:'EQ-001', name:'CNC Lathe Machine', category:'Machining', location:'Shop Floor A', dept:'Production',
+      manufacturer:'Haas', model:'ST-20', serial:'HAAS-2021-4421',
+      purchaseDate:'2021-03-15', commissioningDate:'2021-04-01', cost:4500000,
+      expectedLifespanHours:50000, baseUsageHours:12400, runningStartISO:null,
+      warrantyEnd:'2024-03-15', vendor:'Haas Automation India', status:'Running' },
+    { id:'EQ-002', name:'Hydraulic Press 100T', category:'Forming', location:'Shop Floor B', dept:'Production',
+      manufacturer:'Schuler', model:'HP-100', serial:'SCH-2020-8821',
+      purchaseDate:'2020-07-22', commissioningDate:'2020-08-10', cost:2800000,
+      expectedLifespanHours:40000, baseUsageHours:18700, runningStartISO:null,
+      warrantyEnd:'2023-07-22', vendor:'Schuler India', status:'Under Maintenance' },
+    { id:'EQ-003', name:'Calibration Microscope', category:'Quality Lab', location:'QC Lab', dept:'Quality',
+      manufacturer:'Mitutoyo', model:'MF-A1010C', serial:'MIT-2022-1102',
+      purchaseDate:'2022-01-10', commissioningDate:'2022-01-20', cost:850000,
+      expectedLifespanHours:25000, baseUsageHours:4200, runningStartISO:null,
+      warrantyEnd:'2025-01-10', vendor:'Mitutoyo South Asia', status:'Running' },
+    { id:'EQ-004', name:'Air Compressor 50HP', category:'Utility', location:'Utility Room', dept:'Maintenance',
+      manufacturer:'Atlas Copco', model:'GA37', serial:'AC-2019-3344',
+      purchaseDate:'2019-11-05', commissioningDate:'2019-11-20', cost:1200000,
+      expectedLifespanHours:60000, baseUsageHours:32000, runningStartISO:null,
+      warrantyEnd:'2022-11-05', vendor:'Atlas Copco India', status:'Idle' },
+    { id:'EQ-005', name:'Welding Robot', category:'Automation', location:'Shop Floor A', dept:'Production',
+      manufacturer:'KUKA', model:'KR-16', serial:'KUKA-2023-0912',
+      purchaseDate:'2023-02-20', commissioningDate:'2023-03-01', cost:6800000,
+      expectedLifespanHours:80000, baseUsageHours:5600, runningStartISO:null,
+      warrantyEnd:'2026-02-20', vendor:'KUKA Robotics', status:'Running' },
+    { id:'EQ-006', name:'Surface Grinder', category:'Machining', location:'Shop Floor C', dept:'Production',
+      manufacturer:'Chevalier', model:'FSG-1020ADII', serial:'CHV-2018-5566',
+      purchaseDate:'2018-05-10', commissioningDate:'2018-06-01', cost:950000,
+      expectedLifespanHours:35000, baseUsageHours:34500, runningStartISO:null,
+      warrantyEnd:'2021-05-10', vendor:'Chevalier India', status:'Obsolete' },
+  ],
+  pmSchedules: [
+    { id:'PM-001', equipmentId:'EQ-001', task:'Lubrication & coolant change', pmType:'PM', frequency:'Monthly', lastDone:daysAgo(20), nextDue:daysFromNow(10), assignedTo:'T-001', status:'Scheduled', attachment:null, attachmentName:null, completedDate:null },
+    { id:'PM-002', equipmentId:'EQ-002', task:'Hydraulic oil filter replacement', pmType:'PM', frequency:'Quarterly', lastDone:daysAgo(85), nextDue:daysFromNow(5), assignedTo:'T-001', status:'Scheduled', attachment:null, attachmentName:null, completedDate:null },
+    { id:'PM-003', equipmentId:'EQ-004', task:'Belt tension check & filter clean', pmType:'AM', frequency:'Monthly', lastDone:daysAgo(35), nextDue:daysAgo(5), assignedTo:'T-002', status:'Overdue', attachment:null, attachmentName:null, completedDate:null },
+    { id:'PM-004', equipmentId:'EQ-005', task:'Robot axis calibration & greasing', pmType:'PM', frequency:'Half-Yearly', lastDone:daysAgo(150), nextDue:daysFromNow(30), assignedTo:'T-001', status:'Scheduled', attachment:null, attachmentName:null, completedDate:null },
+    { id:'PM-005', equipmentId:'EQ-003', task:'Optical system cleaning', pmType:'PM', frequency:'Quarterly', lastDone:daysAgo(25), nextDue:daysFromNow(65), assignedTo:'T-003', status:'Scheduled', attachment:null, attachmentName:null, completedDate:null },
+    { id:'PM-006', equipmentId:'EQ-001', task:'Spindle bearing inspection', pmType:'AM', frequency:'Yearly', lastDone:daysAgo(380), nextDue:daysAgo(15), assignedTo:'T-001', status:'Overdue', attachment:null, attachmentName:null, completedDate:null },
+  ],
+  calibrations: [
+    { id:'CAL-001', equipmentId:'EQ-003', parameter:'Optical accuracy', make:'Mitutoyo', model:'MF-A1010C', serialNo:'MIT-2022-1102', frequency:'Yearly', lastCalibrated:daysAgo(330), nextDue:daysFromNow(35), certificate:'NABL-2024-1102', status:'Valid', reportAttachment:null, reportName:null, agency:'NABL Lab Pvt Ltd', cost:8500 },
+    { id:'CAL-002', equipmentId:'EQ-001', parameter:'Spindle alignment', make:'Haas', model:'ST-20', serialNo:'HAAS-2021-4421', frequency:'Yearly', lastCalibrated:daysAgo(360), nextDue:daysFromNow(5), certificate:'NABL-2024-0991', status:'Expiring Soon', reportAttachment:null, reportName:null, agency:'Precision Calibration Services', cost:12000 },
+    { id:'CAL-003', equipmentId:'EQ-002', parameter:'Pressure gauge', make:'Schuler', model:'HP-100', serialNo:'SCH-2020-8821', frequency:'Half-Yearly', lastCalibrated:daysAgo(200), nextDue:daysAgo(20), certificate:'NABL-2024-0750', status:'Expired', reportAttachment:null, reportName:null, agency:'NABL Lab Pvt Ltd', cost:5500 },
+    { id:'CAL-004', equipmentId:'EQ-005', parameter:'Axis positioning accuracy', make:'KUKA', model:'KR-16', serialNo:'KUKA-2023-0912', frequency:'Yearly', lastCalibrated:daysAgo(180), nextDue:daysFromNow(185), certificate:'NABL-2024-2210', status:'Valid', reportAttachment:null, reportName:null, agency:'KUKA Calibration Dept', cost:18000 },
+  ],
+  breakdowns: [
+    { id:'BR-001', equipmentId:'EQ-002', description:'Hydraulic pump pressure dropping intermittently', priority:'High', raisedBy:'u4', raisedDate:daysAgo(3), assignedTo:'T-001', status:'In Progress', resolutionTime:null, rootCause:'', notes:'Investigation ongoing' },
+    { id:'BR-002', equipmentId:'EQ-001', description:'Coolant leakage near spindle housing', priority:'Medium', raisedBy:'u2', raisedDate:daysAgo(15), assignedTo:'T-001', status:'Resolved', resolutionTime:18, rootCause:'Worn out seal', notes:'Replaced spindle seal kit' },
+    { id:'BR-003', equipmentId:'EQ-004', description:'Unusual noise from compressor unit', priority:'Low', raisedBy:'u2', raisedDate:daysAgo(8), assignedTo:'T-002', status:'Resolved', resolutionTime:6, rootCause:'Loose mounting bolts', notes:'Tightened bolts and lubricated' },
+  ],
+  history: [
+    { id:'H-001', equipmentId:'EQ-001', date:daysAgo(15), type:'Breakdown', description:'Coolant seal replacement', technician:'Ravi Kumar', partsUsed:'Spindle seal kit', cost:4500 },
+    { id:'H-002', equipmentId:'EQ-001', date:daysAgo(20), type:'PM', description:'Monthly lubrication & coolant change', technician:'Ravi Kumar', partsUsed:'Coolant 20L, Grease 1Kg', cost:3200 },
+    { id:'H-003', equipmentId:'EQ-002', date:daysAgo(85), type:'PM', description:'Quarterly hydraulic oil filter', technician:'Ravi Kumar', partsUsed:'Filter HF-200', cost:2100 },
+    { id:'H-004', equipmentId:'EQ-004', date:daysAgo(8), type:'Breakdown', description:'Tightened mounting bolts', technician:'Ravi Kumar', partsUsed:'-', cost:0 },
+    { id:'H-005', equipmentId:'EQ-003', date:daysAgo(330), type:'CAL', description:'Optical accuracy calibration', technician:'External NABL', partsUsed:'-', cost:8500 },
+    { id:'H-006', equipmentId:'EQ-001', date:daysAgo(360), type:'CAL', description:'Spindle alignment calibration', technician:'Precision Calibration Services', partsUsed:'-', cost:12000 },
+    { id:'H-007', equipmentId:'EQ-005', date:daysAgo(60), type:'PM', description:'Robot axis calibration & greasing', technician:'Ravi Kumar', partsUsed:'Grease 500g', cost:1800 },
+  ],
+  spares: [
+    { id:'SP-001', name:'Spindle Seal Kit', linkedEquipment:'EQ-001', stock:8, minStock:5, unit:'pcs', cost:1500, consumed:2 },
+    { id:'SP-002', name:'Hydraulic Filter HF-200', linkedEquipment:'EQ-002', stock:3, minStock:6, unit:'pcs', cost:2100, consumed:5 },
+    { id:'SP-003', name:'Coolant 20L Drum', linkedEquipment:'EQ-001', stock:12, minStock:4, unit:'drums', cost:3200, consumed:6 },
+    { id:'SP-004', name:'Air Filter Cartridge', linkedEquipment:'EQ-004', stock:2, minStock:4, unit:'pcs', cost:850, consumed:8 },
+    { id:'SP-005', name:'Robot Servo Belt', linkedEquipment:'EQ-005', stock:4, minStock:2, unit:'pcs', cost:5400, consumed:1 },
+  ],
+  documents: [
+    { id:'D-001', equipmentId:'EQ-001', name:'CNC Lathe Operation Manual', type:'Manual', uploadedDate:daysAgo(400), uploadedBy:'Admin' },
+    { id:'D-002', equipmentId:'EQ-001', name:'SOP - Daily Startup Checklist', type:'SOP', uploadedDate:daysAgo(200), uploadedBy:'Admin' },
+    { id:'D-003', equipmentId:'EQ-003', name:'NABL Calibration Certificate 2024', type:'Calibration Certificate', uploadedDate:daysAgo(330), uploadedBy:'Admin' },
+    { id:'D-004', equipmentId:'EQ-005', name:'KUKA AMC Contract 2024-26', type:'AMC Contract', uploadedDate:daysAgo(120), uploadedBy:'Admin' },
+  ],
+  amcs: [
+    { id:'AMC-001', equipmentId:'EQ-005', vendor:'KUKA Robotics India', contact:'+91-9876543210', startDate:daysAgo(120), endDate:daysFromNow(610), value:180000, paid:90000, serviceCount:2, status:'Active' },
+    { id:'AMC-002', equipmentId:'EQ-003', vendor:'Mitutoyo South Asia', contact:'+91-9123456780', startDate:daysAgo(60), endDate:daysFromNow(305), value:65000, paid:65000, serviceCount:1, status:'Active' },
+    { id:'AMC-003', equipmentId:'EQ-002', vendor:'Schuler India', contact:'+91-9988776655', startDate:daysAgo(400), endDate:daysAgo(35), value:120000, paid:120000, serviceCount:4, status:'Expired' },
+  ],
+  audits: [
+    { id:'AU-001', equipmentId:'EQ-001', date:daysAgo(45), auditor:'Priya Sharma', score:88, nonConformances:1, capa:'Update lubrication log frequency', status:'Closed' },
+    { id:'AU-002', equipmentId:'EQ-002', date:daysAgo(20), auditor:'Priya Sharma', score:62, nonConformances:4, capa:'Calibration certificate expired - immediate action', status:'Open' },
+    { id:'AU-003', equipmentId:'EQ-005', date:daysAgo(10), auditor:'Priya Sharma', score:95, nonConformances:0, capa:'-', status:'Closed' },
+  ],
+};
+
+let DB = JSON.parse(localStorage.getItem(LS_KEY) || 'null') || JSON.parse(JSON.stringify(SEED));
+let SESSION = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+let currentPage = 'dashboard';
+let notifFilter = 'all';
+let activeCharts = {};
+
+function save(){ localStorage.setItem(LS_KEY, JSON.stringify(DB)); }
+function saveSession(){ localStorage.setItem(SESSION_KEY, JSON.stringify(SESSION)); }
+function destroyCharts(){ Object.values(activeCharts).forEach(c=>{ try{c.destroy();}catch(e){} }); activeCharts={}; }
+
+/* ================= AUTH ================= */
+function quickLogin(u,p){ document.getElementById('loginUser').value=u; document.getElementById('loginPass').value=p; doLogin(); }
+function doLogin(){
+  const u=document.getElementById('loginUser').value.trim();
+  const p=document.getElementById('loginPass').value;
+  const user=DB.users.find(x=>x.username===u && x.password===p);
+  if(!user){ document.getElementById('loginError').classList.remove('hidden'); return; }
+  SESSION={userId:user.id,loginAt:new Date().toISOString()};
+  saveSession(); initApp();
+}
+function logout(){ localStorage.removeItem(SESSION_KEY); SESSION=null; document.getElementById('appScreen').classList.add('hidden'); document.getElementById('loginScreen').classList.remove('hidden'); }
+function currentUser(){ return DB.users.find(u=>u.id===SESSION.userId); }
+function hasRole(roles){ return roles.includes(currentUser().role); }
+
+/* ================= USAGE HOURS ================= */
+function getUsageHours(eq){
+  let hours = eq.baseUsageHours || 0;
+  if(eq.status==='Running' && eq.runningStartISO){
+    const hrs = (new Date()-new Date(eq.runningStartISO))/(1000*60*60);
+    hours += hrs;
+  }
+  return Math.round(hours);
+}
+function setEquipmentStatus(id, newStatus){
+  const eq = DB.equipment.find(e=>e.id===id);
+  if(!eq)return;
+  // If was running, accumulate hours
+  if(eq.status==='Running' && eq.runningStartISO){
+    const hrs=(new Date()-new Date(eq.runningStartISO))/(1000*60*60);
+    eq.baseUsageHours=(eq.baseUsageHours||0)+hrs;
+    eq.runningStartISO=null;
+  }
+  eq.status=newStatus;
+  // If now running, record start time
+  if(newStatus==='Running') eq.runningStartISO=nowISO();
+  save();
+}
+
+/* ================= NAV ================= */
+const MENU = [
+  { id:'dashboard',   label:'Dashboard',            icon:'📊', roles:['Admin','Maintenance','Viewer','HOD'] },
+  { id:'overview',    label:'Equipment Overview',   icon:'🖥️', roles:['Admin','Maintenance','Viewer','HOD'] },
+  { id:'equipment',   label:'Equipment Master',     icon:'⚙️', roles:['Admin','Maintenance','Viewer','HOD'] },
+  { id:'pm',          label:'Preventive Maintenance',icon:'🔧', roles:['Admin','Maintenance','Viewer','HOD'] },
+  { id:'pmtracking',  label:'PM Tracking',          icon:'📋', roles:['Admin','Maintenance','HOD'] },
+  { id:'calibration', label:'Calibration',          icon:'🎯', roles:['Admin','Maintenance','Viewer','HOD'] },
+  { id:'caltracking', label:'CAL Tracking',         icon:'📐', roles:['Admin','Maintenance','HOD'] },
+  { id:'compliance',  label:'Compliance',           icon:'✅', roles:['Admin','HOD','Viewer'] },
+  { id:'breakdown',   label:'Breakdown / Complaints',icon:'🚨', roles:['Admin','Maintenance','HOD'] },
+  { id:'history',     label:'Maintenance History',  icon:'📜', roles:['Admin','Maintenance','Viewer','HOD'] },
+  { id:'reports',     label:'Reports & Status',     icon:'📈', roles:['Admin','HOD','Viewer'] },
+  { id:'spares',      label:'Spare Parts',          icon:'📦', roles:['Admin','Maintenance','HOD'] },
+  { id:'lifecycle',   label:'Equipment Life Cycle', icon:'🔄', roles:['Admin','HOD','Viewer'] },
+  { id:'documents',   label:'Documents',            icon:'📑', roles:['Admin','Maintenance','Viewer','HOD'] },
+  { id:'amc',         label:'AMC / Vendor',         icon:'🤝', roles:['Admin','HOD'] },
+  { id:'schedule',    label:'Schedule',             icon:'📅', roles:['Admin','Maintenance','HOD'] },
+  { id:'audit',       label:'Compliance & Audit',   icon:'🏆', roles:['Admin','HOD','Viewer'] },
+  { id:'users',       label:'Users & Roles',        icon:'👥', roles:['Admin'] },
+];
+
+function buildSidebar(){
+  const nav=document.getElementById('sideNav');
+  const role=currentUser().role;
+  nav.innerHTML=MENU.filter(m=>m.roles.includes(role)).map(m=>`
+    <button onclick="navigate('${m.id}')" class="sidebar-link w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition ${currentPage===m.id?'active':''}">
+      <span class="text-sm">${m.icon}</span><span class="truncate">${m.label}</span>
+    </button>`).join('');
+}
+function navigate(id){
+  destroyCharts();
+  currentPage=id;
+  buildSidebar();
+  const meta=MENU.find(m=>m.id===id);
+  document.getElementById('pageTitle').textContent=meta.label;
+  document.getElementById('pageSubtitle').textContent='';
+  RENDERERS[id]();
+}
+
+/* ================= NOTIFICATIONS ================= */
+let allNotifs=[];
+function buildNotifications(){
+  const list=[];
+  DB.pmSchedules.forEach(p=>{
+    const eq=DB.equipment.find(e=>e.id===p.equipmentId);
+    const d=diffDays(p.nextDue);
+    if(d<0) list.push({type:'pm',subtype:'overdue',text:`PM Overdue: ${eq?.name} — ${p.task} (${Math.abs(d)}d)`,color:'red'});
+    else if(d<=7) list.push({type:'pm',subtype:'soon',text:`Upcoming PM: ${eq?.name} in ${d} days — ${p.task}`,color:'yellow'});
+  });
+  DB.calibrations.forEach(c=>{
+    const eq=DB.equipment.find(e=>e.id===c.equipmentId);
+    const d=diffDays(c.nextDue);
+    if(d<0) list.push({type:'cal',subtype:'expired',text:`CAL Expired: ${eq?.name} — ${c.parameter} (${Math.abs(d)}d ago)`,color:'red'});
+    else if(d<=30) list.push({type:'cal',subtype:'soon',text:`CAL Expiring: ${eq?.name} — ${c.parameter} in ${d} days`,color:'yellow'});
+  });
+  DB.breakdowns.filter(b=>b.status!=='Resolved'&&b.priority==='High').forEach(b=>{
+    const eq=DB.equipment.find(e=>e.id===b.equipmentId);
+    list.push({type:'other',text:`High Priority Breakdown: ${eq?.name}`,color:'red'});
+  });
+  DB.spares.filter(s=>s.stock<=s.minStock).forEach(s=>{
+    list.push({type:'other',text:`Low Stock: ${s.name} (${s.stock} ${s.unit})`,color:'yellow'});
+  });
+  DB.amcs.filter(a=>diffDays(a.endDate)<=30).forEach(a=>{
+    const eq=DB.equipment.find(e=>e.id===a.equipmentId);
+    const d=diffDays(a.endDate);
+    list.push({type:'other',text:d<0?`AMC Expired: ${eq?.name}`:`AMC Expiring: ${eq?.name} in ${d} days`,color:d<0?'red':'yellow'});
+  });
+  allNotifs=list;
+  return list;
+}
+function filterNotif(f){
+  notifFilter=f;
+  ['all','pm','cal','other'].forEach(k=>{ document.getElementById('nf'+k.charAt(0).toUpperCase()+k.slice(1)) .className='px-3 py-1 text-xs rounded-full font-semibold '+(f===k?'bg-gray-800 text-white':'bg-gray-100 text-gray-600'); });
+  renderNotifList();
+}
+function renderNotifList(){
+  const list=allNotifs.filter(n=>notifFilter==='all'||n.type===notifFilter);
+  const colorMap={red:'bg-red-500',yellow:'bg-yellow-500'};
+  document.getElementById('notifList').innerHTML=list.length===0
+    ?`<div class="p-6 text-center text-gray-500 text-sm">No alerts in this category.</div>`
+    :list.map(n=>`<div class="p-3 hover:bg-gray-50 flex gap-3 items-start">
+        <div class="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${colorMap[n.color]||'bg-gray-400'}"></div>
+        <div class="text-sm text-gray-700">${n.text}</div>
+       </div>`).join('');
+}
+function refreshNotif(){
+  const list=buildNotifications();
+  const badge=document.getElementById('notifBadge');
+  badge.textContent=list.length;
+  badge.classList.toggle('hidden',list.length===0);
+  renderNotifList();
+}
+function toggleNotifPanel(){ document.getElementById('notifPanel').classList.toggle('hidden'); refreshNotif(); }
+
+/* ================= MODAL ================= */
+function openModal(title,body){ document.getElementById('modalTitle').textContent=title; document.getElementById('modalBody').innerHTML=body; document.getElementById('modal').classList.remove('hidden'); }
+function closeModal(){ document.getElementById('modal').classList.add('hidden'); }
+
+/* ================= HELPERS ================= */
+function eqName(id){ return DB.equipment.find(e=>e.id===id)?.name||id; }
+function techName(id){ return DB.technicians.find(t=>t.id===id)?.name||id||'-'; }
+function statusBadge(s){
+  const map={'Running':'b-green','Operational':'b-green','Under Maintenance':'b-yellow','Idle':'b-gray','Obsolete':'b-orange','Decommissioned':'b-gray','Scheduled':'b-blue','Overdue':'b-red','Completed':'b-green','Valid':'b-green','Expiring Soon':'b-yellow','Expired':'b-red','Open':'b-yellow','In Progress':'b-blue','Resolved':'b-green','Closed':'b-green','Active':'b-green','High':'b-red','Medium':'b-yellow','Low':'b-blue','PM':'b-blue','AM':'b-purple','No':'b-gray','CAL':'b-indigo','Breakdown':'b-red'};
+  return `<span class="badge ${map[s]||'b-gray'}">${s}</span>`;
+}
+function eqDropdown(selected=''){ return DB.equipment.map(e=>`<option value="${e.id}" ${e.id===selected?'selected':''}>${e.name} (${e.id})</option>`).join(''); }
+function techDropdown(selected=''){ return DB.technicians.map(t=>`<option value="${t.id}" ${t.id===selected?'selected':''}>${t.name} — ${t.dept}</option>`).join('')+`<option value="__add__">+ Add New Technician</option>`; }
+function handleTechChange(el){ if(el.value==='__add__'){ el.value=''; addTechnicianModal(el.id); } }
+
+function addTechnicianModal(returnSelectId){
+  openModal('Add New Technician',`
+    <form onsubmit="saveTechnician(event,'${returnSelectId}')" class="space-y-4">
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs uppercase text-gray-600">Full Name</label><input name="name" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+        <div><label class="text-xs uppercase text-gray-600">Phone</label><input name="phone" class="w-full px-3 py-2 border rounded mt-1"/></div>
+        <div><label class="text-xs uppercase text-gray-600">Department</label><input name="dept" class="w-full px-3 py-2 border rounded mt-1"/></div>
+      </div>
+      <div class="flex justify-end gap-2"><button type="button" onclick="closeModal()" class="px-4 py-2 border rounded text-sm">Cancel</button><button class="bg-blue-700 text-white px-4 py-2 rounded text-sm">Add</button></div>
+    </form>`);
+}
+function saveTechnician(ev, returnSelectId){
+  ev.preventDefault();
+  const f=Object.fromEntries(new FormData(ev.target).entries());
+  const id='T-'+String(DB.technicians.length+1).padStart(3,'0');
+  DB.technicians.push({id,...f});
+  save(); closeModal();
+  // Refresh the select if still visible
+  const sel=document.getElementById(returnSelectId);
+  if(sel){ sel.innerHTML=techDropdown(id); sel.value=id; }
+}
+
+/* ================= FILE ATTACHMENT ================= */
+function readFileB64(inputEl, cb){
+  const file=inputEl.files[0];
+  if(!file){cb(null,null);return;}
+  if(file.size>2*1024*1024){alert('File too large. Max 2MB for local storage.');cb(null,null);return;}
+  const reader=new FileReader();
+  reader.onload=e=>cb(e.target.result,file.name);
+  reader.readAsDataURL(file);
+}
+function attachmentLink(data,name){
+  if(!data)return '<span class="text-gray-400 text-xs">No attachment</span>';
+  return `<a href="${data}" download="${name||'attachment'}" class="text-blue-700 text-xs underline hover:text-blue-900">📎 ${name||'Download'}</a>`;
+}
+
+/* ================= PDF EXPORT ================= */
+function exportPagePDF(){
+  window.print();
+}
+
+/* ================= CHART HELPER ================= */
+function mkChart(id,config){
+  const el=document.getElementById(id);
+  if(!el)return;
+  if(activeCharts[id])try{activeCharts[id].destroy();}catch(e){}
+  activeCharts[id]=new Chart(el,config);
+}
+
+/* ============================================
+   RENDERERS
+   ============================================ */
+const RENDERERS={};
+
+/* ---- DASHBOARD ---- */
+RENDERERS.dashboard=function(){
+  const total=DB.equipment.length;
+  const running=DB.equipment.filter(e=>e.status==='Running'||e.status==='Operational').length;
+  const underMaint=DB.equipment.filter(e=>e.status==='Under Maintenance').length;
+  const idle=DB.equipment.filter(e=>e.status==='Idle').length;
+  const obsolete=DB.equipment.filter(e=>e.status==='Obsolete'||e.status==='Decommissioned').length;
+  const openBreak=DB.breakdowns.filter(b=>b.status!=='Resolved').length;
+  const overduePM=DB.pmSchedules.filter(p=>diffDays(p.nextDue)<0).length;
+  const expiredCal=DB.calibrations.filter(c=>diffDays(c.nextDue)<0).length;
+  const calCompleted=DB.history.filter(h=>h.type==='CAL').length;
+  const pmCompliance=Math.round((DB.pmSchedules.filter(p=>diffDays(p.nextDue)>=0).length/Math.max(1,DB.pmSchedules.length))*100);
+  const lowStock=DB.spares.filter(s=>s.stock<=s.minStock).length;
+  const overduePct=Math.round(overduePM/Math.max(1,DB.pmSchedules.length)*100);
+
+  // Plan vs Actual - last 6 months
+  const months6=[];
+  for(let i=5;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);months6.push(d.toISOString().slice(0,7));}
+  const pmPlan=months6.map(m=>DB.pmSchedules.filter(p=>p.nextDue&&p.nextDue.startsWith(m)).length+DB.history.filter(h=>h.type==='PM'&&h.date.startsWith(m)).length);
+  const pmActual=months6.map(m=>DB.history.filter(h=>h.type==='PM'&&h.date.startsWith(m)).length);
+  const calData=months6.map(m=>DB.history.filter(h=>h.type==='CAL'&&h.date.startsWith(m)).length);
+
+  // Cost by equipment
+  const costByEq={};
+  DB.history.forEach(h=>{const n=eqName(h.equipmentId);costByEq[n]=(costByEq[n]||0)+h.cost;});
+
+  // Recent activity
+  const recent=DB.history.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+
+  document.getElementById('pageContent').innerHTML=`
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-5">
+      ${kpiCard('Running',running,'green','▶','pm','Running')}
+      ${kpiCard('Under Maintenance',underMaint,'yellow','🔧','equipment','Under Maintenance')}
+      ${kpiCard('Idle',idle,'gray','⏸','equipment','Idle')}
+      ${kpiCard('Obsolete',obsolete,'orange','🗑','reports','')}
+      ${kpiCard('Open Breakdowns',openBreak,'red','🚨','breakdown','')}
+      ${kpiCard('PM Compliance',pmCompliance+'%','indigo','📊','compliance','')}
+      ${kpiCard('Overdue PMs',overduePM,'red','⏰','pmtracking','overdue')}
+      ${kpiCard('PM Overdue %',overduePct+'%','red','📉','pmtracking','')}
+      ${kpiCard('Expired CAL',expiredCal,'red','🎯','caltracking','expired')}
+      ${kpiCard('CAL Completed',calCompleted,'green','✔','history','CAL')}
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+      <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <h3 class="font-semibold text-gray-900 mb-3 text-sm">Equipment Status Distribution</h3>
+        <canvas id="chartStatus" height="180"></canvas>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <h3 class="font-semibold text-gray-900 mb-3 text-sm">Plan vs Actual — PM (6 Months)</h3>
+        <canvas id="chartPlanActual" height="180"></canvas>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <h3 class="font-semibold text-gray-900 mb-3 text-sm">Monthly PM Trend & Calibration Data</h3>
+        <canvas id="chartTrend" height="180"></canvas>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <h3 class="font-semibold text-gray-900 mb-3 text-sm">Maintenance Cost by Equipment</h3>
+        <canvas id="chartCost" height="180"></canvas>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl border border-gray-200 p-5">
+      <h3 class="font-semibold text-gray-900 mb-3 text-sm">Recent Activity</h3>
+      <div class="space-y-2">
+        ${recent.map(h=>`
+          <div class="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+            <div class="flex items-center gap-3">
+              ${statusBadge(h.type==='PM'?'PM':h.type==='CAL'?'CAL':'Breakdown')}
+              <div>
+                <p class="text-sm font-medium text-gray-800">${eqName(h.equipmentId)}</p>
+                <p class="text-xs text-gray-500">${h.description} · ${h.technician}</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-gray-500">${h.date}</p>
+              <p class="text-sm font-semibold text-gray-700">${fmtCost(h.cost)}</p>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+
+  setTimeout(()=>{
+    mkChart('chartStatus',{type:'doughnut',data:{labels:['Running','Under Maint.','Idle','Obsolete'],datasets:[{data:[running,underMaint,idle,obsolete],backgroundColor:['#16a34a','#eab308','#9ca3af','#f97316']}]},options:{plugins:{legend:{position:'bottom'}},cutout:'60%'}});
+    mkChart('chartPlanActual',{type:'bar',data:{labels:months6,datasets:[{label:'Planned',data:pmPlan,backgroundColor:'rgba(59,130,246,0.5)',borderColor:'#3b82f6',borderWidth:1},{label:'Actual',data:pmActual,backgroundColor:'rgba(16,163,74,0.5)',borderColor:'#10b981',borderWidth:1}]},options:{plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
+    mkChart('chartTrend',{type:'line',data:{labels:months6,datasets:[{label:'PM Count',data:pmActual,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.1)',tension:0.3,fill:true},{label:'CAL Count',data:calData,borderColor:'#8b5cf6',backgroundColor:'rgba(139,92,246,0.1)',tension:0.3,fill:true}]},options:{plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
+    mkChart('chartCost',{type:'bar',data:{labels:Object.keys(costByEq),datasets:[{label:'Cost (₹)',data:Object.values(costByEq),backgroundColor:'#6366f1'}]},options:{plugins:{legend:{display:false}},indexAxis:'y',scales:{x:{ticks:{callback:v=>'₹'+v.toLocaleString('en-IN')}}}}});
+  },50);
+};
+
+function kpiCard(label,value,color,icon,navTo,filter){
+  const colors={blue:'bg-blue-50 text-blue-700',green:'bg-green-50 text-green-700',red:'bg-red-50 text-red-700',yellow:'bg-yellow-50 text-yellow-700',indigo:'bg-indigo-50 text-indigo-700',orange:'bg-orange-50 text-orange-700',gray:'bg-gray-100 text-gray-600',purple:'bg-purple-50 text-purple-700'};
+  return `<div class="kpi-card bg-white rounded-xl border border-gray-200 p-4" onclick="navigate('${navTo||'dashboard'}')">
+    <div class="flex items-center justify-between mb-1">
+      <span class="text-xs font-medium text-gray-500 leading-tight">${label}</span>
+      <span class="${colors[color]||colors.blue} w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0">${icon}</span>
+    </div>
+    <p class="text-2xl font-bold text-gray-900">${value}</p>
+  </div>`;
+}
+
+/* ---- EQUIPMENT OVERVIEW ---- */
+RENDERERS.overview=function(){
+  const rows=DB.equipment.map(e=>{
+    const usageH=getUsageHours(e);
+    const lifePct=e.expectedLifespanHours?Math.min(100,Math.round(usageH/e.expectedLifespanHours*100)):0;
+    const lastPM=DB.pmSchedules.filter(p=>p.equipmentId===e.id&&p.lastDone).sort((a,b)=>b.lastDone.localeCompare(a.lastDone))[0]?.lastDone||'-';
+    const nextPM=DB.pmSchedules.filter(p=>p.equipmentId===e.id).sort((a,b)=>a.nextDue.localeCompare(b.nextDue))[0]?.nextDue||'-';
+    const lastCal=DB.calibrations.filter(c=>c.equipmentId===e.id).sort((a,b)=>b.lastCalibrated.localeCompare(a.lastCalibrated))[0]?.lastCalibrated||'-';
+    const nextCal=DB.calibrations.filter(c=>c.equipmentId===e.id).sort((a,b)=>a.nextDue.localeCompare(b.nextDue))[0]?.nextDue||'-';
+    const barColor=lifePct>=90?'bg-red-500':lifePct>=70?'bg-yellow-500':'bg-green-500';
+    return `<tr>
+      <td class="font-mono text-xs text-gray-500">${e.id}</td>
+      <td><p class="font-semibold text-gray-900">${e.name}</p><p class="text-xs text-gray-500">${e.category} · ${e.location}</p></td>
+      <td>${statusBadge(e.status)}</td>
+      <td class="text-xs">${e.commissioningDate||'-'}</td>
+      <td class="text-xs">${e.expectedLifespanHours?e.expectedLifespanHours.toLocaleString()+' h':'-'}</td>
+      <td class="text-xs font-semibold">${usageH.toLocaleString()} h
+        <div class="w-24 bg-gray-200 rounded-full h-1.5 mt-1"><div class="${barColor} h-1.5 rounded-full progress-bar" style="width:${lifePct}%"></div></div>
+        <span class="text-gray-400">${lifePct}% used</span>
+      </td>
+      <td class="text-xs">${lastPM}<div class="text-gray-400">Next: ${nextPM}</div></td>
+      <td class="text-xs">${lastCal}<div class="text-gray-400">Next: ${nextCal}</div></td>
+      <td>${hasRole(['Admin','Maintenance'])?`<button onclick="eqStatusChange('${e.id}')" class="text-blue-700 text-xs font-semibold hover:underline">Update</button>`:''}</td>
+    </tr>`;
+  });
+  document.getElementById('pageContent').innerHTML=`
+    <div class="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+      <table>
+        <thead><tr><th>ID</th><th>Equipment</th><th>Status</th><th>Commissioned</th><th>Expected Life</th><th>Usage Hours</th><th>Last/Next PM</th><th>Last/Next CAL</th><th></th></tr></thead>
+        <tbody>${rows.join('')}</tbody>
+      </table>
+    </div>`;
+};
+
+function eqStatusChange(id){
+  const e=DB.equipment.find(x=>x.id===id);
+  openModal('Update Status — '+e.name,`
+    <form onsubmit="doEqStatusChange(event,'${id}')" class="space-y-4">
+      <div><label class="text-xs uppercase text-gray-600">New Status</label>
+        <select name="status" class="w-full px-3 py-2 border rounded mt-1">
+          ${['Running','Under Maintenance','Idle','Obsolete'].map(s=>`<option ${s===e.status?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div><label class="text-xs uppercase text-gray-600">Current Usage Hours (manual override)</label>
+        <input type="number" name="baseUsageHours" value="${e.baseUsageHours||0}" class="w-full px-3 py-2 border rounded mt-1"/>
+      </div>
+      <div class="flex justify-end gap-2"><button type="button" onclick="closeModal()" class="px-4 py-2 border rounded text-sm">Cancel</button><button class="bg-blue-700 text-white px-4 py-2 rounded text-sm">Update</button></div>
+    </form>`);
+}
+function doEqStatusChange(ev,id){
+  ev.preventDefault();
+  const f=Object.fromEntries(new FormData(ev.target).entries());
+  const eq=DB.equipment.find(e=>e.id===id);
+  eq.baseUsageHours=Number(f.baseUsageHours);
+  setEquipmentStatus(id,f.status);
+  closeModal(); navigate('overview');
+}
+
+/* ---- EQUIPMENT MASTER ---- */
+RENDERERS.equipment=function(){
+  document.getElementById('pageContent').innerHTML=`
+    <div class="flex flex-wrap gap-3 items-center mb-4">
+      <input id="eqSearch" placeholder="Search equipment..." class="px-4 py-2 border border-gray-300 rounded-lg w-72" oninput="renderEqTable()"/>
+      <select id="eqStatusFilter" onchange="renderEqTable()" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+        <option value="">All Statuses</option>
+        <option>Running</option><option>Under Maintenance</option><option>Idle</option><option>Obsolete</option>
+      </select>
+      ${hasRole(['Admin','Maintenance'])?`<button onclick="eqForm()" class="ml-auto bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-semibold">+ Add Equipment</button>`:''}
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div id="eqTableWrap"></div>
+    </div>`;
+  renderEqTable();
+};
+function renderEqTable(){
+  const q=(document.getElementById('eqSearch')?.value||'').toLowerCase();
+  const sf=(document.getElementById('eqStatusFilter')?.value||'');
+  const rows=DB.equipment.filter(e=>(!q||e.name.toLowerCase().includes(q)||e.id.toLowerCase().includes(q)||e.location.toLowerCase().includes(q))&&(!sf||e.status===sf));
+  document.getElementById('eqTableWrap').innerHTML=`
+    <table>
+      <thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Location</th><th>Make / Model</th><th>Status</th><th>Warranty</th><th>Life Used</th><th></th></tr></thead>
+      <tbody>${rows.map(e=>{
+        const usageH=getUsageHours(e);
+        const lifePct=e.expectedLifespanHours?Math.min(100,Math.round(usageH/e.expectedLifespanHours*100)):0;
+        return`<tr>
+          <td class="font-mono text-xs text-gray-600">${e.id}</td>
+          <td class="font-semibold">${e.name}</td>
+          <td class="text-sm">${e.category}</td>
+          <td class="text-sm">${e.location}<div class="text-xs text-gray-500">${e.dept}</div></td>
+          <td class="text-sm">${e.manufacturer}<div class="text-xs text-gray-500">${e.model} · ${e.serial}</div></td>
+          <td>${statusBadge(e.status)}</td>
+          <td class="text-xs">${e.warrantyEnd}<div class="${diffDays(e.warrantyEnd)<0?'text-red-600':'text-gray-500'}">${diffDays(e.warrantyEnd)<0?'Expired':diffDays(e.warrantyEnd)+' days left'}</div></td>
+          <td class="text-xs">${usageH.toLocaleString()}h / ${(e.expectedLifespanHours||0).toLocaleString()}h<div class="w-16 bg-gray-200 rounded-full h-1.5 mt-1"><div class="${lifePct>=90?'bg-red-500':lifePct>=70?'bg-yellow-500':'bg-green-500'} h-1.5 rounded-full" style="width:${lifePct}%"></div></div></td>
+          <td><button onclick="eqView('${e.id}')" class="text-blue-700 text-sm font-semibold hover:underline">View</button></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+}
+function eqView(id){
+  const e=DB.equipment.find(x=>x.id===id);
+  const docs=DB.documents.filter(d=>d.equipmentId===id);
+  const hist=DB.history.filter(h=>h.equipmentId===id);
+  const usageH=getUsageHours(e);
+  const lifePct=e.expectedLifespanHours?Math.min(100,Math.round(usageH/e.expectedLifespanHours*100)):0;
+  openModal(e.name,`
+    <div class="grid grid-cols-2 gap-3 text-sm mb-4">
+      <div><div class="text-xs text-gray-500 uppercase">ID</div><div class="font-medium">${e.id}</div></div>
+      <div><div class="text-xs text-gray-500 uppercase">Status</div><div>${statusBadge(e.status)}</div></div>
+      <div><div class="text-xs text-gray-500 uppercase">Category</div><div>${e.category}</div></div>
+      <div><div class="text-xs text-gray-500 uppercase">Location</div><div>${e.location} · ${e.dept}</div></div>
+      <div><div class="text-xs text-gray-500 uppercase">Make / Model</div><div>${e.manufacturer} / ${e.model}</div></div>
+      <div><div class="text-xs text-gray-500 uppercase">Serial No.</div><div class="font-mono">${e.serial}</div></div>
+      <div><div class="text-xs text-gray-500 uppercase">Purchase Date</div><div>${e.purchaseDate}</div></div>
+      <div><div class="text-xs text-gray-500 uppercase">Commissioning Date</div><div>${e.commissioningDate||'-'}</div></div>
+      <div><div class="text-xs text-gray-500 uppercase">Cost</div><div>${fmtCost(e.cost)}</div></div>
+      <div><div class="text-xs text-gray-500 uppercase">Warranty End</div><div class="${diffDays(e.warrantyEnd)<0?'text-red-600':''}">${e.warrantyEnd}</div></div>
+      <div><div class="text-xs text-gray-500 uppercase">Vendor</div><div>${e.vendor}</div></div>
+      <div><div class="text-xs text-gray-500 uppercase">Expected Lifespan</div><div>${(e.expectedLifespanHours||0).toLocaleString()} hours</div></div>
+    </div>
+    <div class="bg-gray-50 rounded-lg p-3 mb-4">
+      <div class="flex justify-between text-sm mb-1"><span class="font-medium">Current Usage Hours</span><span class="font-bold">${usageH.toLocaleString()} / ${(e.expectedLifespanHours||0).toLocaleString()} h (${lifePct}%)</span></div>
+      <div class="w-full bg-gray-200 rounded-full h-2.5"><div class="${lifePct>=90?'bg-red-500':lifePct>=70?'bg-yellow-500':'bg-green-500'} h-2.5 rounded-full progress-bar" style="width:${lifePct}%"></div></div>
+      <p class="text-xs text-gray-500 mt-1">Remaining: ${Math.max(0,(e.expectedLifespanHours||0)-usageH).toLocaleString()} hours</p>
+    </div>
+    <h4 class="font-semibold mb-2 text-sm">Documents (${docs.length})</h4>
+    <ul class="text-sm mb-3 space-y-1">${docs.map(d=>`<li>📄 ${d.name} <span class="text-xs text-gray-500">(${d.type})</span></li>`).join('')||'<li class="text-gray-400 text-xs">No documents</li>'}</ul>
+    <h4 class="font-semibold mb-2 text-sm">Recent History</h4>
+    <ul class="text-sm space-y-1">${hist.slice(0,5).map(h=>`<li class="text-gray-700">${h.date} · <b>${h.type}</b> — ${h.description}</li>`).join('')||'<li class="text-gray-400 text-xs">No history</li>'}</ul>
+    ${hasRole(['Admin'])?`<div class="mt-4 flex gap-2 border-t pt-4"><button onclick="closeModal();eqForm('${id}')" class="bg-blue-700 text-white px-4 py-2 rounded text-sm">Edit</button><button onclick="eqDelete('${id}')" class="bg-red-600 text-white px-4 py-2 rounded text-sm">Delete</button></div>`:''}
+  `);
+}
+function eqForm(id){
+  const e=id?DB.equipment.find(x=>x.id===id):{id:'EQ-'+String(DB.equipment.length+1).padStart(3,'0'),name:'',category:'',location:'',dept:'',manufacturer:'',model:'',serial:'',purchaseDate:todayISO(),commissioningDate:todayISO(),cost:0,warrantyEnd:todayISO(),vendor:'',status:'Running',expectedLifespanHours:50000,baseUsageHours:0};
+  openModal(id?'Edit Equipment':'Add Equipment',`
+    <form onsubmit="eqSave(event,'${id||''}')" class="grid grid-cols-2 gap-3">
+      <div><label class="text-xs text-gray-600 uppercase">Equipment ID</label><input name="id" value="${e.id}" ${id?'readonly':''} required class="w-full px-3 py-2 border rounded mt-1 ${id?'bg-gray-50':''}"/></div>
+      <div><label class="text-xs text-gray-600 uppercase">Name</label><input name="name" value="${e.name||''}" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+      <div><label class="text-xs text-gray-600 uppercase">Category</label><input name="category" value="${e.category||''}" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+      <div><label class="text-xs text-gray-600 uppercase">Location</label><input name="location" value="${e.location||''}" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+      <div><label class="text-xs text-gray-600 uppercase">Department</label><input name="dept" value="${e.dept||''}" class="w-full px-3 py-2 border rounded mt-1"/></div>
+      <div><label class="text-xs text-gray-600 uppercase">Manufacturer (Make)</label><input name="manufacturer" value="${e.manufacturer||''}" class="w-full px-3 py-2 border rounded mt-1"/></div>
+      <div><label class="text-xs text-gray-600 uppercase">Model</label><input name="model" value="${e.model||''}" class="w-full px-3 py-2 border rounded mt-1"/></div>
+      <div><label class="text-xs text-gray-600 uppercase">Serial No.</label><input name="serial" value="${e.serial||''}" class="w-full px-3 py-2 border rounded mt-1"/></div>
+      <div><label class="text-xs text-gray-600 uppercase">Vendor</label><input name="vendor" value="${e.vendor||''}" class="w-full px-3 py-2 border rounded mt-1"/></div>
+      <div><label class="text-xs text-gray-600 uppercase">Status</label>
+        <select name="status" class="w-full px-3 py-2 border rounded mt-1">${['Running','Under Maintenance','Idle','Obsolete'].map(s=>`<option ${s===e.status?'selected':''}>${s}</option>`).join('')}</select>
+      </div>
+      <div><label class="text-xs text-gray-600 uppercase">Purchase Date</label><input type="date" name="purchaseDate" value="${e.purchaseDate}" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+      <div><label class="text-xs text-gray-600 uppercase">Commissioning Date</label><input type="date" name="commissioningDate" value="${e.commissioningDate||''}" class="w-full px-3 py-2 border rounded mt-1"/></div>
+      <div><label class="text-xs text-gray-600 uppercase">Cost (₹)</label><input type="number" name="cost" value="${e.cost}" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+      <div><label class="text-xs text-gray-600 uppercase">Warranty End</label><input type="date" name="warrantyEnd" value="${e.warrantyEnd}" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+      <div><label class="text-xs text-gray-600 uppercase">Expected Lifespan (Hours)</label><input type="number" name="expectedLifespanHours" value="${e.expectedLifespanHours||0}" class="w-full px-3 py-2 border rounded mt-1"/></div>
+      <div><label class="text-xs text-gray-600 uppercase">Current Usage Hours</label><input type="number" name="baseUsageHours" value="${e.baseUsageHours||0}" class="w-full px-3 py-2 border rounded mt-1"/></div>
+      <div class="col-span-2 flex justify-end gap-2 mt-2 border-t pt-3"><button type="button" onclick="closeModal()" class="px-4 py-2 border rounded text-sm">Cancel</button><button class="bg-blue-700 text-white px-4 py-2 rounded text-sm">Save</button></div>
+    </form>`);
+}
+function eqSave(ev,id){
+  ev.preventDefault();
+  const f=Object.fromEntries(new FormData(ev.target).entries());
+  f.cost=Number(f.cost); f.expectedLifespanHours=Number(f.expectedLifespanHours); f.baseUsageHours=Number(f.baseUsageHours);
+  if(id){
+    const old=DB.equipment.find(x=>x.id===id);
+    const prevStatus=old.status;
+    if(prevStatus==='Running'&&old.runningStartISO&&f.status!=='Running'){
+      const hrs=(new Date()-new Date(old.runningStartISO))/(1000*60*60);
+      f.baseUsageHours=Number(f.baseUsageHours)+hrs;
+      f.runningStartISO=null;
+    }
+    if(f.status==='Running'&&prevStatus!=='Running') f.runningStartISO=nowISO();
+    Object.assign(old,f);
+  } else {
+    DB.equipment.push({...f, runningStartISO:f.status==='Running'?nowISO():null});
+  }
+  save(); closeModal(); navigate('equipment'); refreshNotif();
+}
+function eqDelete(id){ if(!confirm('Delete this equipment? All linked records remain.'))return; DB.equipment=DB.equipment.filter(e=>e.id!==id); save(); closeModal(); navigate('equipment'); }
+
+/* ---- PREVENTIVE MAINTENANCE ---- */
+RENDERERS.pm=function(){
+  const filter=(new URLSearchParams(location.hash.split('?')[1]||'')).get('f')||'';
+  let rows=DB.pmSchedules;
+  if(filter==='overdue') rows=rows.filter(p=>diffDays(p.nextDue)<0);
+  document.getElementById('pageContent').innerHTML=`
+    <div class="flex flex-wrap gap-3 items-center mb-4">
+      <div class="flex gap-2">
+        <button onclick="navigate('pm')" class="px-3 py-1.5 rounded-lg text-sm font-medium ${!filter?'bg-blue-700 text-white':'bg-gray-100 text-gray-600'}">All</button>
+        <button onclick="pmFilterOverdue()" class="px-3 py-1.5 rounded-lg text-sm font-medium ${filter==='overdue'?'bg-red-600 text-white':'bg-gray-100 text-gray-600'}">Overdue</button>
+      </div>
+      ${hasRole(['Admin','Maintenance'])?`<button onclick="pmForm()" class="ml-auto bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold">+ New PM Schedule</button>`:''}
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+      <table>
+        <thead><tr><th>PM ID</th><th>Equipment</th><th>Task Name</th><th>Type</th><th>Frequency</th><th>Last Done</th><th>Next Due</th><th>Technician</th><th>Status</th><th>Attachment</th><th></th></tr></thead>
+        <tbody>${rows.map(p=>{
+          const days=diffDays(p.nextDue);
+          const status=days<0?'Overdue':p.status;
+          return`<tr>
+            <td class="font-mono text-xs">${p.id}</td>
+            <td class="font-semibold text-sm">${eqName(p.equipmentId)}</td>
+            <td class="text-sm">${p.task}</td>
+            <td>${statusBadge(p.pmType||'PM')}</td>
+            <td class="text-xs">${p.frequency}</td>
+            <td class="text-xs">${p.lastDone||'-'}</td>
+            <td class="text-xs">${p.nextDue}<div class="${days<0?'text-red-600':days<7?'text-yellow-600':'text-gray-400'} text-xs">${days<0?Math.abs(days)+'d overdue':days+'d left'}</div></td>
+            <td class="text-xs">${techName(p.assignedTo)}</td>
+            <td>${statusBadge(status)}</td>
+            <td>${attachmentLink(p.attachment,p.attachmentName)}</td>
+            <td class="flex gap-1">${hasRole(['Admin','Maintenance'])?`<button onclick="pmComplete('${p.id}')" class="text-green-700 text-xs font-semibold hover:underline whitespace-nowrap">✔ Done</button><button onclick="pmEdit('${p.id}')" class="text-blue-700 text-xs font-semibold hover:underline ml-2">Edit</button>`:''}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>`;
+};
+function pmFilterOverdue(){ location.hash='pm?f=overdue'; navigate('pm'); }
+function pmForm(id){
+  const p=id?DB.pmSchedules.find(x=>x.id===id):null;
+  openModal(id?'Edit PM Schedule':'New PM Schedule',`
+    <form onsubmit="pmSave(event,'${id||''}')" class="space-y-3" enctype="multipart/form-data">
+      <div><label class="text-xs uppercase text-gray-600">Equipment</label>
+        <select name="equipmentId" required class="w-full px-3 py-2 border rounded mt-1">${eqDropdown(p?.equipmentId)}</select>
+      </div>
+      <div><label class="text-xs uppercase text-gray-600">Task Name</label>
+        <input name="task" value="${p?.task||''}" required class="w-full px-3 py-2 border rounded mt-1"/>
+      </div>
+      <div class="grid grid-cols-3 gap-3">
+        <div><label class="text-xs uppercase text-gray-600">PM Type</label>
+          <select name="pmType" class="w-full px-3 py-2 border rounded mt-1">
+            ${['PM','AM','No'].map(t=>`<option ${(p?.pmType||'PM')===t?'selected':''}>${t}</option>`).join('')}
+          </select>
+        </div>
+        <div><label class="text-xs uppercase text-gray-600">Frequency</label>
+          <select name="frequency" class="w-full px-3 py-2 border rounded mt-1">${['Weekly','Monthly','Quarterly','Half-Yearly','Yearly'].map(f=>`<option ${p?.frequency===f?'selected':''}>${f}</option>`).join('')}</select>
+        </div>
+        <div><label class="text-xs uppercase text-gray-600">Next Due</label>
+          <input type="date" name="nextDue" value="${p?.nextDue||daysFromNow(30)}" required class="w-full px-3 py-2 border rounded mt-1"/>
+        </div>
+      </div>
+      <div><label class="text-xs uppercase text-gray-600">Technician</label>
+        <select name="assignedTo" id="pmTechSel" onchange="handleTechChange(this)" class="w-full px-3 py-2 border rounded mt-1">${techDropdown(p?.assignedTo)}</select>
+      </div>
+      <div><label class="text-xs uppercase text-gray-600">Report / Attachment (max 2MB)</label>
+        <input type="file" id="pmFileInput" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" class="w-full px-3 py-2 border rounded mt-1 text-sm"/>
+        ${p?.attachment?`<div class="mt-1">${attachmentLink(p.attachment,p.attachmentName)}</div>`:''}
+      </div>
+      <div class="flex justify-end gap-2 pt-2"><button type="button" onclick="closeModal()" class="px-4 py-2 border rounded text-sm">Cancel</button><button class="bg-blue-700 text-white px-4 py-2 rounded text-sm">Save</button></div>
+    </form>`);
+}
+function pmEdit(id){ pmForm(id); }
+function pmSave(ev,editId){
+  ev.preventDefault();
+  const f=Object.fromEntries(new FormData(ev.target).entries());
+  const fileInput=document.getElementById('pmFileInput');
+  function finish(attachment,attachmentName){
+    if(editId){
+      const existing=DB.pmSchedules.find(x=>x.id===editId);
+      Object.assign(existing,{...f,attachment:attachment||existing.attachment,attachmentName:attachmentName||existing.attachmentName});
+    } else {
+      DB.pmSchedules.push({id:'PM-'+String(DB.pmSchedules.length+1).padStart(3,'0'),...f,lastDone:todayISO(),status:'Scheduled',attachment,attachmentName,completedDate:null});
+    }
+    save(); closeModal(); navigate('pm'); refreshNotif();
+  }
+  if(fileInput&&fileInput.files[0]){
+    readFileB64(fileInput,(data,name)=>finish(data,name));
+  } else {
+    finish(null,null);
+  }
+}
+function pmComplete(id){
+  const p=DB.pmSchedules.find(x=>x.id===id);
+  if(!p)return;
+  openModal('Mark PM Complete — '+eqName(p.equipmentId),`
+    <form onsubmit="pmCompleteConfirm(event,'${id}')" class="space-y-3">
+      <div><label class="text-xs uppercase text-gray-600">Completion Date</label><input type="date" name="completedDate" value="${todayISO()}" class="w-full px-3 py-2 border rounded mt-1"/></div>
+      <div><label class="text-xs uppercase text-gray-600">Parts Used</label><input name="partsUsed" value="-" class="w-full px-3 py-2 border rounded mt-1"/></div>
+      <div><label class="text-xs uppercase text-gray-600">Cost (₹)</label><input type="number" name="cost" value="0" class="w-full px-3 py-2 border rounded mt-1"/></div>
+      <div><label class="text-xs uppercase text-gray-600">Report / Attachment (max 2MB)</label>
+        <input type="file" id="pmDoneFile" accept=".pdf,.jpg,.jpeg,.png" class="w-full px-3 py-2 border rounded mt-1 text-sm"/>
+      </div>
+      <div class="flex justify-end gap-2"><button type="button" onclick="closeModal()" class="px-4 py-2 border rounded text-sm">Cancel</button><button class="bg-green-600 text-white px-4 py-2 rounded text-sm">Mark Complete</button></div>
+    </form>`);
+}
+function pmCompleteConfirm(ev,id){
+  ev.preventDefault();
+  const f=Object.fromEntries(new FormData(ev.target).entries());
+  const fileInput=document.getElementById('pmDoneFile');
+  function finish(attachment,attachmentName){
+    const p=DB.pmSchedules.find(x=>x.id===id);
+    const freqDays={Weekly:7,Monthly:30,Quarterly:90,'Half-Yearly':180,Yearly:365}[p.frequency]||30;
+    p.lastDone=f.completedDate||todayISO();
+    p.nextDue=daysFromNow(freqDays);
+    p.status='Scheduled';
+    p.completedDate=f.completedDate||todayISO();
+    if(attachment){p.attachment=attachment;p.attachmentName=attachmentName;}
+    DB.history.push({id:'H-'+String(DB.history.length+1).padStart(3,'0'),equipmentId:p.equipmentId,date:f.completedDate||todayISO(),type:'PM',description:p.task,technician:techName(p.assignedTo),partsUsed:f.partsUsed||'-',cost:Number(f.cost)||0});
+    save(); closeModal(); navigate('pm'); refreshNotif();
+  }
+  if(fileInput&&fileInput.files[0]) readFileB64(fileInput,(d,n)=>finish(d,n));
+  else finish(null,null);
+}
+
+/* ---- PM TRACKING ---- */
+RENDERERS.pmtracking=function(){
+  const overdue=DB.pmSchedules.filter(p=>diffDays(p.nextDue)<0);
+  const upcoming=DB.pmSchedules.filter(p=>diffDays(p.nextDue)>=0&&diffDays(p.nextDue)<=30);
+  const compliant=DB.pmSchedules.filter(p=>diffDays(p.nextDue)>30);
+  const overduePct=Math.round(overdue.length/Math.max(1,DB.pmSchedules.length)*100);
+  const months6=[];
+  for(let i=5;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);months6.push(d.toISOString().slice(0,7));}
+  const pmDone=months6.map(m=>DB.history.filter(h=>h.type==='PM'&&h.date.startsWith(m)).length);
+  const pmPlan=months6.map(m=>DB.pmSchedules.filter(p=>p.nextDue&&p.nextDue.startsWith(m)).length+pmDone[months6.indexOf(m)]);
+
+  document.getElementById('pageContent').innerHTML=`
+    <div class="grid grid-cols-3 gap-4 mb-5">
+      <div class="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
+        <p class="text-3xl font-bold text-red-700">${overdue.length}</p>
+        <p class="text-sm text-red-600 font-medium">Overdue PMs</p>
+        <p class="text-xs text-red-500 mt-0.5">${overduePct}% of total</p>
+      </div>
+      <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-center">
+        <p class="text-3xl font-bold text-yellow-700">${upcoming.length}</p>
+        <p class="text-sm text-yellow-600 font-medium">Due in 30 Days</p>
+      </div>
+      <div class="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+        <p class="text-3xl font-bold text-green-700">${compliant.length}</p>
+        <p class="text-sm text-green-600 font-medium">On Schedule</p>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+      <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <h3 class="font-semibold text-sm text-gray-900 mb-3">Plan vs Actual (6 Months)</h3>
+        <canvas id="chartPMTrack" height="180"></canvas>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <h3 class="font-semibold text-sm text-gray-900 mb-3">PM by Technician</h3>
+        <canvas id="chartPMTech" height="180"></canvas>
+      </div>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div class="p-4 border-b border-gray-100"><h3 class="font-semibold text-sm text-gray-900">Overdue PM List</h3></div>
+      <table>
+        <thead><tr><th>Equipment</th><th>Task</th><th>Type</th><th>Due Date</th><th>Days Overdue</th><th>Technician</th><th></th></tr></thead>
+        <tbody>${overdue.length===0?`<tr><td colspan="7" class="text-center text-gray-400 py-6">No overdue PMs</td></tr>`:
+          overdue.map(p=>`<tr>
+            <td class="font-semibold text-sm">${eqName(p.equipmentId)}</td>
+            <td class="text-sm">${p.task}</td>
+            <td>${statusBadge(p.pmType||'PM')}</td>
+            <td class="text-xs text-red-600">${p.nextDue}</td>
+            <td class="text-sm font-bold text-red-700">${Math.abs(diffDays(p.nextDue))} days</td>
+            <td class="text-sm">${techName(p.assignedTo)}</td>
+            <td>${hasRole(['Admin','Maintenance'])?`<button onclick="pmComplete('${p.id}')" class="text-green-700 text-xs font-semibold hover:underline">✔ Done</button>`:''}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+  setTimeout(()=>{
+    const techNames=DB.technicians.map(t=>t.name);
+    const techCounts=DB.technicians.map(t=>DB.pmSchedules.filter(p=>p.assignedTo===t.id).length);
+    mkChart('chartPMTrack',{type:'bar',data:{labels:months6,datasets:[{label:'Planned',data:pmPlan,backgroundColor:'rgba(59,130,246,0.5)',borderColor:'#3b82f6',borderWidth:1},{label:'Actual',data:pmDone,backgroundColor:'rgba(16,163,74,0.5)',borderColor:'#10b981',borderWidth:1}]},options:{plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
+    mkChart('chartPMTech',{type:'doughnut',data:{labels:techNames,datasets:[{data:techCounts,backgroundColor:['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6']}]},options:{plugins:{legend:{position:'bottom'}},cutout:'55%'}});
+  },50);
+};
+
+/* ---- CALIBRATION ---- */
+RENDERERS.calibration=function(){
+  document.getElementById('pageContent').innerHTML=`
+    <div class="flex flex-wrap gap-3 items-center mb-4">
+      <div class="flex gap-2">
+        ${['All','Valid','Expiring Soon','Expired'].map(f=>`<button onclick="calFilter('${f}')" class="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200">${f}</button>`).join('')}
+      </div>
+      ${hasRole(['Admin','Maintenance'])?`<button onclick="calForm()" class="ml-auto bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold">+ New Calibration</button>`:''}
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+      <table id="calTable">
+        <thead><tr><th>ID</th><th>Equipment</th><th>Parameter</th><th>Make</th><th>Model</th><th>Serial No.</th><th>Frequency</th><th>Last CAL</th><th>Next Due</th><th>Certificate</th><th>Agency</th><th>Status</th><th>Report</th><th></th></tr></thead>
+        <tbody id="calBody">${calRows(DB.calibrations)}</tbody>
+      </table>
+    </div>`;
+};
+function calFilter(f){
+  const rows=f==='All'?DB.calibrations:DB.calibrations.filter(c=>{
+    const d=diffDays(c.nextDue);
+    if(f==='Expired')return d<0;
+    if(f==='Expiring Soon')return d>=0&&d<=30;
+    if(f==='Valid')return d>30;
+    return true;
+  });
+  document.getElementById('calBody').innerHTML=calRows(rows);
+}
+function calRows(rows){
+  return rows.map(c=>{
+    const d=diffDays(c.nextDue);
+    const status=d<0?'Expired':d<=30?'Expiring Soon':'Valid';
+    return`<tr>
+      <td class="font-mono text-xs">${c.id}</td>
+      <td class="font-semibold text-sm">${eqName(c.equipmentId)}</td>
+      <td class="text-sm">${c.parameter}</td>
+      <td class="text-sm">${c.make||'-'}</td>
+      <td class="text-sm">${c.model||'-'}</td>
+      <td class="font-mono text-xs">${c.serialNo||'-'}</td>
+      <td class="text-xs">${c.frequency}</td>
+      <td class="text-xs">${c.lastCalibrated}</td>
+      <td class="text-xs">${c.nextDue}<div class="${d<0?'text-red-600':d<=30?'text-yellow-600':'text-gray-400'} text-xs">${d<0?Math.abs(d)+'d expired':d+'d left'}</div></td>
+      <td class="font-mono text-xs">${c.certificate}</td>
+      <td class="text-xs">${c.agency||'-'}</td>
+      <td>${statusBadge(status)}</td>
+      <td>${attachmentLink(c.reportAttachment,c.reportName)}</td>
+      <td class="flex gap-1">${hasRole(['Admin','Maintenance'])?`<button onclick="calRenew('${c.id}')" class="text-green-700 text-xs font-semibold hover:underline">Renew</button><button onclick="calEdit('${c.id}')" class="text-blue-700 text-xs font-semibold hover:underline ml-2">Edit</button>`:''}</td>
+    </tr>`;
+  }).join('');
+}
+function calForm(id){
+  const c=id?DB.calibrations.find(x=>x.id===id):null;
+  const linkedEq=c?DB.equipment.find(e=>e.id===c.equipmentId):null;
+  openModal(id?'Edit Calibration':'New Calibration Record',`
+    <form onsubmit="calSave(event,'${id||''}')" class="space-y-3">
+      <div><label class="text-xs uppercase text-gray-600">Equipment</label>
+        <select name="equipmentId" id="calEqSel" onchange="prefillCalFromEq(this.value)" required class="w-full px-3 py-2 border rounded mt-1">${eqDropdown(c?.equipmentId)}</select>
+      </div>
+      <div class="grid grid-cols-3 gap-3">
+        <div><label class="text-xs uppercase text-gray-600">Make</label><input name="make" id="calMake" value="${c?.make||linkedEq?.manufacturer||''}" class="w-full px-3 py-2 border rounded mt-1"/></div>
+        <div><label class="text-xs uppercase text-gray-600">Model</label><input name="model" id="calModel" value="${c?.model||linkedEq?.model||''}" class="w-full px-3 py-2 border rounded mt-1"/></div>
+        <div><label class="text-xs uppercase text-gray-600">Serial No.</label><input name="serialNo" id="calSerial" value="${c?.serialNo||linkedEq?.serial||''}" class="w-full px-3 py-2 border rounded mt-1"/></div>
+      </div>
+      <div><label class="text-xs uppercase text-gray-600">Parameter / Scope</label><input name="parameter" value="${c?.parameter||''}" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs uppercase text-gray-600">Frequency</label>
+          <select name="frequency" class="w-full px-3 py-2 border rounded mt-1">${['Quarterly','Half-Yearly','Yearly','2-Yearly'].map(f=>`<option ${c?.frequency===f?'selected':''}>${f}</option>`).join('')}</select>
+        </div>
+        <div><label class="text-xs uppercase text-gray-600">Next Due Date</label><input type="date" name="nextDue" value="${c?.nextDue||daysFromNow(365)}" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs uppercase text-gray-600">Certificate No.</label><input name="certificate" value="${c?.certificate||''}" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+        <div><label class="text-xs uppercase text-gray-600">Calibration Agency</label><input name="agency" value="${c?.agency||''}" class="w-full px-3 py-2 border rounded mt-1"/></div>
+      </div>
+      <div><label class="text-xs uppercase text-gray-600">Cost (₹)</label><input type="number" name="cost" value="${c?.cost||0}" class="w-full px-3 py-2 border rounded mt-1"/></div>
+      <div><label class="text-xs uppercase text-gray-600">Calibration Report / Certificate (max 2MB)</label>
+        <input type="file" id="calFileInput" accept=".pdf,.jpg,.jpeg,.png" class="w-full px-3 py-2 border rounded mt-1 text-sm"/>
+        ${c?.reportAttachment?`<div class="mt-1">${attachmentLink(c.reportAttachment,c.reportName)}</div>`:''}
+      </div>
+      <div class="flex justify-end gap-2 pt-2"><button type="button" onclick="closeModal()" class="px-4 py-2 border rounded text-sm">Cancel</button><button class="bg-blue-700 text-white px-4 py-2 rounded text-sm">Save</button></div>
+    </form>`);
+}
+function prefillCalFromEq(eqId){
+  const eq=DB.equipment.find(e=>e.id===eqId);
+  if(eq){
+    const m=document.getElementById('calMake');const mo=document.getElementById('calModel');const s=document.getElementById('calSerial');
+    if(m&&!m.value)m.value=eq.manufacturer||'';
+    if(mo&&!mo.value)mo.value=eq.model||'';
+    if(s&&!s.value)s.value=eq.serial||'';
+  }
+}
+function calEdit(id){ calForm(id); }
+function calSave(ev,editId){
+  ev.preventDefault();
+  const f=Object.fromEntries(new FormData(ev.target).entries());
+  f.cost=Number(f.cost);
+  const fileInput=document.getElementById('calFileInput');
+  function finish(attachment,reportName){
+    if(editId){
+      const existing=DB.calibrations.find(x=>x.id===editId);
+      Object.assign(existing,{...f,reportAttachment:attachment||existing.reportAttachment,reportName:reportName||existing.reportName});
+    } else {
+      DB.calibrations.push({id:'CAL-'+String(DB.calibrations.length+1).padStart(3,'0'),...f,lastCalibrated:todayISO(),status:'Valid',reportAttachment:attachment,reportName});
+    }
+    save(); closeModal(); navigate('calibration'); refreshNotif();
+  }
+  if(fileInput&&fileInput.files[0]) readFileB64(fileInput,(d,n)=>finish(d,n));
+  else finish(null,null);
+}
+function calRenew(id){
+  const c=DB.calibrations.find(x=>x.id===id);
+  openModal('Renew Calibration — '+eqName(c.equipmentId),`
+    <form onsubmit="calRenewConfirm(event,'${id}')" class="space-y-3">
+      <div><label class="text-xs uppercase text-gray-600">New Certificate No.</label><input name="certificate" value="${c.certificate}" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+      <div><label class="text-xs uppercase text-gray-600">Calibration Date</label><input type="date" name="calDate" value="${todayISO()}" class="w-full px-3 py-2 border rounded mt-1"/></div>
+      <div><label class="text-xs uppercase text-gray-600">Next Due Date</label><input type="date" name="nextDue" value="${daysFromNow({Quarterly:90,'Half-Yearly':180,Yearly:365,'2-Yearly':730}[c.frequency]||365)}" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+      <div><label class="text-xs uppercase text-gray-600">Cost (₹)</label><input type="number" name="cost" value="${c.cost||5000}" class="w-full px-3 py-2 border rounded mt-1"/></div>
+      <div><label class="text-xs uppercase text-gray-600">Report / Certificate (max 2MB)</label>
+        <input type="file" id="calRenewFile" accept=".pdf,.jpg,.jpeg,.png" class="w-full px-3 py-2 border rounded mt-1 text-sm"/>
+      </div>
+      <div class="flex justify-end gap-2"><button type="button" onclick="closeModal()" class="px-4 py-2 border rounded text-sm">Cancel</button><button class="bg-green-600 text-white px-4 py-2 rounded text-sm">Renew</button></div>
+    </form>`);
+}
+function calRenewConfirm(ev,id){
+  ev.preventDefault();
+  const f=Object.fromEntries(new FormData(ev.target).entries());
+  const fileInput=document.getElementById('calRenewFile');
+  function finish(attachment,reportName){
+    const c=DB.calibrations.find(x=>x.id===id);
+    c.lastCalibrated=f.calDate||todayISO();
+    c.nextDue=f.nextDue;
+    c.certificate=f.certificate;
+    if(attachment){c.reportAttachment=attachment;c.reportName=reportName;}
+    DB.history.push({id:'H-'+String(DB.history.length+1).padStart(3,'0'),equipmentId:c.equipmentId,date:f.calDate||todayISO(),type:'CAL',description:c.parameter+' calibration renewed',technician:c.agency||'External',partsUsed:'-',cost:Number(f.cost)||0});
+    save(); closeModal(); navigate('calibration'); refreshNotif();
+  }
+  if(fileInput&&fileInput.files[0]) readFileB64(fileInput,(d,n)=>finish(d,n));
+  else finish(null,null);
+}
+
+/* ---- CAL TRACKING ---- */
+RENDERERS.caltracking=function(){
+  const expired=DB.calibrations.filter(c=>diffDays(c.nextDue)<0);
+  const expiring=DB.calibrations.filter(c=>diffDays(c.nextDue)>=0&&diffDays(c.nextDue)<=30);
+  const valid=DB.calibrations.filter(c=>diffDays(c.nextDue)>30);
+  const months6=[];
+  for(let i=5;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);months6.push(d.toISOString().slice(0,7));}
+  const calDone=months6.map(m=>DB.history.filter(h=>h.type==='CAL'&&h.date.startsWith(m)).length);
+
+  document.getElementById('pageContent').innerHTML=`
+    <div class="grid grid-cols-3 gap-4 mb-5">
+      <div class="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
+        <p class="text-3xl font-bold text-red-700">${expired.length}</p>
+        <p class="text-sm text-red-600 font-medium">Expired Calibrations</p>
+      </div>
+      <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-center">
+        <p class="text-3xl font-bold text-yellow-700">${expiring.length}</p>
+        <p class="text-sm text-yellow-600 font-medium">Expiring in 30 Days</p>
+      </div>
+      <div class="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+        <p class="text-3xl font-bold text-green-700">${valid.length}</p>
+        <p class="text-sm text-green-600 font-medium">Valid Calibrations</p>
+      </div>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-5 mb-5">
+      <h3 class="font-semibold text-sm text-gray-900 mb-3">Monthly Calibration Trend (6 Months)</h3>
+      <canvas id="chartCALTrend" height="130"></canvas>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div class="p-4 border-b border-gray-100 flex items-center gap-2"><span class="text-red-500 font-bold text-sm">●</span><h3 class="font-semibold text-sm text-gray-900">Expired</h3></div>
+        <table><thead><tr><th>Equipment</th><th>Parameter</th><th>Expired</th><th></th></tr></thead>
+        <tbody>${expired.length===0?`<tr><td colspan="4" class="text-center text-gray-400 py-4 text-sm">None expired</td></tr>`:
+          expired.map(c=>`<tr>
+            <td class="text-sm font-semibold">${eqName(c.equipmentId)}</td>
+            <td class="text-sm">${c.parameter}</td>
+            <td class="text-xs text-red-600">${Math.abs(diffDays(c.nextDue))}d ago</td>
+            <td>${hasRole(['Admin','Maintenance'])?`<button onclick="calRenew('${c.id}')" class="text-green-700 text-xs font-semibold hover:underline">Renew</button>`:''}</td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div class="p-4 border-b border-gray-100 flex items-center gap-2"><span class="text-yellow-500 font-bold text-sm">●</span><h3 class="font-semibold text-sm text-gray-900">Expiring Soon (≤30 days)</h3></div>
+        <table><thead><tr><th>Equipment</th><th>Parameter</th><th>Due In</th><th></th></tr></thead>
+        <tbody>${expiring.length===0?`<tr><td colspan="4" class="text-center text-gray-400 py-4 text-sm">None expiring soon</td></tr>`:
+          expiring.map(c=>`<tr>
+            <td class="text-sm font-semibold">${eqName(c.equipmentId)}</td>
+            <td class="text-sm">${c.parameter}</td>
+            <td class="text-xs text-yellow-600">${diffDays(c.nextDue)} days</td>
+            <td>${hasRole(['Admin','Maintenance'])?`<button onclick="calRenew('${c.id}')" class="text-green-700 text-xs font-semibold hover:underline">Renew</button>`:''}</td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>`;
+
+  setTimeout(()=>{
+    mkChart('chartCALTrend',{type:'bar',data:{labels:months6,datasets:[{label:'Calibrations Done',data:calDone,backgroundColor:'rgba(139,92,246,0.6)',borderColor:'#8b5cf6',borderWidth:1}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
+  },50);
+};
+
+/* ---- COMPLIANCE ---- */
+RENDERERS.compliance=function(){
+  const totalPM=DB.pmSchedules.length;
+  const overduePM=DB.pmSchedules.filter(p=>diffDays(p.nextDue)<0).length;
+  const pmCompPct=Math.round(((totalPM-overduePM)/Math.max(1,totalPM))*100);
+  const totalCAL=DB.calibrations.length;
+  const expiredCAL=DB.calibrations.filter(c=>diffDays(c.nextDue)<0).length;
+  const calCompPct=Math.round(((totalCAL-expiredCAL)/Math.max(1,totalCAL))*100);
+  const overduePct=Math.round(overduePM/Math.max(1,totalPM)*100);
+  const audits=DB.audits;
+  const avgScore=audits.length?Math.round(audits.reduce((s,a)=>s+a.score,0)/audits.length):0;
+  const openNC=audits.reduce((s,a)=>s+(a.status==='Open'?a.nonConformances:0),0);
+
+  document.getElementById('pageContent').innerHTML=`
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+      <div class="bg-white rounded-xl border border-gray-200 p-4 text-center">
+        <div class="text-3xl font-bold ${pmCompPct>=80?'text-green-700':pmCompPct>=60?'text-yellow-700':'text-red-700'}">${pmCompPct}%</div>
+        <p class="text-sm text-gray-600 mt-1">PM Compliance</p>
+        <p class="text-xs text-gray-400">${totalPM-overduePM} / ${totalPM} on schedule</p>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 p-4 text-center">
+        <div class="text-3xl font-bold ${calCompPct>=80?'text-green-700':calCompPct>=60?'text-yellow-700':'text-red-700'}">${calCompPct}%</div>
+        <p class="text-sm text-gray-600 mt-1">CAL Compliance</p>
+        <p class="text-xs text-gray-400">${totalCAL-expiredCAL} / ${totalCAL} valid</p>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 p-4 text-center">
+        <div class="text-3xl font-bold text-red-700">${overduePct}%</div>
+        <p class="text-sm text-gray-600 mt-1">PM Overdue %</p>
+        <p class="text-xs text-gray-400">${overduePM} of ${totalPM} tasks overdue</p>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 p-4 text-center">
+        <div class="text-3xl font-bold ${avgScore>=80?'text-green-700':avgScore>=60?'text-yellow-700':'text-red-700'}">${avgScore}</div>
+        <p class="text-sm text-gray-600 mt-1">Avg Audit Score</p>
+        <p class="text-xs text-gray-400">${openNC} open non-conformances</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+      <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <h3 class="font-semibold text-sm text-gray-900 mb-4">Compliance Overview</h3>
+        <canvas id="chartComp" height="200"></canvas>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <h3 class="font-semibold text-sm text-gray-900 mb-3">PM Compliance by Equipment</h3>
+        <div class="space-y-3">
+          ${DB.equipment.map(e=>{
+            const eqPMs=DB.pmSchedules.filter(p=>p.equipmentId===e.id);
+            const overPMs=eqPMs.filter(p=>diffDays(p.nextDue)<0).length;
+            const pct=eqPMs.length?Math.round(((eqPMs.length-overPMs)/eqPMs.length)*100):100;
+            return`<div>
+              <div class="flex justify-between text-xs mb-1"><span class="font-medium text-gray-700">${e.name}</span><span class="font-bold ${pct>=80?'text-green-700':pct>=60?'text-yellow-700':'text-red-700'}">${pct}%</span></div>
+              <div class="w-full bg-gray-200 rounded-full h-2"><div class="${pct>=80?'bg-green-500':pct>=60?'bg-yellow-500':'bg-red-500'} h-2 rounded-full progress-bar" style="width:${pct}%"></div></div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div class="p-4 border-b border-gray-100"><h3 class="font-semibold text-sm text-gray-900">Audit Results</h3></div>
+      <table><thead><tr><th>Equipment</th><th>Date</th><th>Auditor</th><th>Score</th><th>Non-Conformances</th><th>CAPA</th><th>Status</th></tr></thead>
+      <tbody>${DB.audits.map(a=>`<tr>
+        <td class="font-semibold text-sm">${eqName(a.equipmentId)}</td>
+        <td class="text-xs">${a.date}</td>
+        <td class="text-sm">${a.auditor}</td>
+        <td><span class="font-bold ${a.score>=80?'text-green-700':a.score>=60?'text-yellow-700':'text-red-700'}">${a.score}/100</span></td>
+        <td class="text-sm">${a.nonConformances}</td>
+        <td class="text-xs max-w-xs truncate">${a.capa}</td>
+        <td>${statusBadge(a.status)}</td>
+      </tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+
+  setTimeout(()=>{
+    mkChart('chartComp',{type:'radar',data:{labels:['PM Compliance','CAL Compliance','On-Time PM','Audit Score','Equipment Running'],datasets:[{label:'Current Status',data:[pmCompPct,calCompPct,(totalPM-overduePM)/Math.max(1,totalPM)*100,avgScore,Math.round(DB.equipment.filter(e=>e.status==='Running').length/Math.max(1,DB.equipment.length)*100)],backgroundColor:'rgba(59,130,246,0.15)',borderColor:'#3b82f6',borderWidth:2,pointBackgroundColor:'#3b82f6'}]},options:{scales:{r:{min:0,max:100,ticks:{stepSize:25}}},plugins:{legend:{display:false}}}});
+  },50);
+};
+
+/* ---- BREAKDOWN ---- */
+RENDERERS.breakdown=function(){
+  document.getElementById('pageContent').innerHTML=`
+    <div class="flex justify-between items-center mb-4">
+      <p class="text-sm text-gray-600">Raise complaints, track resolution and root cause</p>
+      <button onclick="brForm()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-semibold">+ Raise Complaint</button>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <table>
+        <thead><tr><th>ID</th><th>Equipment</th><th>Issue</th><th>Priority</th><th>Raised</th><th>By</th><th>Technician</th><th>Status</th><th></th></tr></thead>
+        <tbody>${DB.breakdowns.map(b=>`<tr>
+          <td class="font-mono text-xs">${b.id}</td>
+          <td class="font-semibold text-sm">${eqName(b.equipmentId)}</td>
+          <td class="text-sm max-w-xs truncate">${b.description}</td>
+          <td>${statusBadge(b.priority)}</td>
+          <td class="text-xs">${b.raisedDate}</td>
+          <td class="text-xs">${DB.users.find(u=>u.id===b.raisedBy)?.name||'-'}</td>
+          <td class="text-xs">${techName(b.assignedTo)}</td>
+          <td>${statusBadge(b.status)}</td>
+          <td><button onclick="brView('${b.id}')" class="text-blue-700 text-sm font-semibold hover:underline">Open</button></td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+};
+function brForm(){
+  openModal('Raise Complaint',`
+    <form onsubmit="brSave(event)" class="space-y-3">
+      <div><label class="text-xs uppercase text-gray-600">Equipment</label><select name="equipmentId" required class="w-full px-3 py-2 border rounded mt-1">${eqDropdown()}</select></div>
+      <div><label class="text-xs uppercase text-gray-600">Issue Description</label><textarea name="description" required rows="3" class="w-full px-3 py-2 border rounded mt-1"></textarea></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs uppercase text-gray-600">Priority</label><select name="priority" class="w-full px-3 py-2 border rounded mt-1"><option>High</option><option>Medium</option><option>Low</option></select></div>
+        <div><label class="text-xs uppercase text-gray-600">Assign Technician</label><select name="assignedTo" id="brTechSel" onchange="handleTechChange(this)" class="w-full px-3 py-2 border rounded mt-1">${techDropdown()}</select></div>
+      </div>
+      <div class="flex justify-end gap-2"><button type="button" onclick="closeModal()" class="px-4 py-2 border rounded text-sm">Cancel</button><button class="bg-red-600 text-white px-4 py-2 rounded text-sm">Raise</button></div>
+    </form>`);
+}
+function brSave(ev){
+  ev.preventDefault(); const f=Object.fromEntries(new FormData(ev.target).entries());
+  DB.breakdowns.unshift({id:'BR-'+String(DB.breakdowns.length+1).padStart(3,'0'),...f,raisedBy:SESSION.userId,raisedDate:todayISO(),status:'Open',resolutionTime:null,rootCause:'',notes:''});
+  save(); closeModal(); navigate('breakdown'); refreshNotif();
+}
+function brView(id){
+  const b=DB.breakdowns.find(x=>x.id===id);
+  openModal('Complaint '+id,`
+    <div class="space-y-3 mb-4 text-sm">
+      <div><b>Equipment:</b> ${eqName(b.equipmentId)}</div>
+      <div><b>Issue:</b> ${b.description}</div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><b>Priority:</b> ${statusBadge(b.priority)}</div>
+        <div><b>Status:</b> ${statusBadge(b.status)}</div>
+        <div><b>Raised:</b> ${b.raisedDate}</div>
+        <div><b>Technician:</b> ${techName(b.assignedTo)}</div>
+      </div>
+    </div>
+    <form onsubmit="brUpdate(event,'${id}')" class="space-y-3 border-t pt-4">
+      <div><label class="text-xs uppercase text-gray-600">Status</label><select name="status" class="w-full px-3 py-2 border rounded mt-1">${['Open','In Progress','Resolved'].map(s=>`<option ${s===b.status?'selected':''}>${s}</option>`).join('')}</select></div>
+      <div><label class="text-xs uppercase text-gray-600">Root Cause</label><input name="rootCause" value="${b.rootCause||''}" class="w-full px-3 py-2 border rounded mt-1"/></div>
+      <div><label class="text-xs uppercase text-gray-600">Resolution Time (hours)</label><input type="number" name="resolutionTime" value="${b.resolutionTime||''}" class="w-full px-3 py-2 border rounded mt-1"/></div>
+      <div><label class="text-xs uppercase text-gray-600">Technician Notes</label><textarea name="notes" rows="2" class="w-full px-3 py-2 border rounded mt-1">${b.notes||''}</textarea></div>
+      <button class="bg-blue-700 text-white px-4 py-2 rounded text-sm">Update</button>
+    </form>`);
+}
+function brUpdate(ev,id){
+  ev.preventDefault(); const f=Object.fromEntries(new FormData(ev.target).entries());
+  const b=DB.breakdowns.find(x=>x.id===id); Object.assign(b,f); b.resolutionTime=f.resolutionTime?Number(f.resolutionTime):null;
+  if(b.status==='Resolved') DB.history.push({id:'H-'+String(DB.history.length+1).padStart(3,'0'),equipmentId:b.equipmentId,date:todayISO(),type:'Breakdown',description:b.description,technician:techName(b.assignedTo),partsUsed:'-',cost:0});
+  save(); closeModal(); navigate('breakdown'); refreshNotif();
+}
+
+/* ---- HISTORY ---- */
+RENDERERS.history=function(){
+  const sorted=DB.history.slice().sort((a,b)=>b.date.localeCompare(a.date));
+  document.getElementById('pageContent').innerHTML=`
+    <div class="flex flex-wrap gap-3 items-center mb-4">
+      <select id="histTypeFilter" onchange="renderHistTable()" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+        <option value="">All Types</option><option>PM</option><option>CAL</option><option>Breakdown</option>
+      </select>
+      <select id="histEqFilter" onchange="renderHistTable()" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+        <option value="">All Equipment</option>${DB.equipment.map(e=>`<option value="${e.id}">${e.name}</option>`).join('')}
+      </select>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div id="histTableWrap"></div>
+    </div>`;
+  renderHistTable();
+};
+function renderHistTable(){
+  const tf=(document.getElementById('histTypeFilter')?.value||'');
+  const ef=(document.getElementById('histEqFilter')?.value||'');
+  const rows=DB.history.slice().sort((a,b)=>b.date.localeCompare(a.date)).filter(h=>(!tf||h.type===tf)&&(!ef||h.equipmentId===ef));
+  document.getElementById('histTableWrap').innerHTML=`<table>
+    <thead><tr><th>Date</th><th>Equipment</th><th>Type</th><th>Description</th><th>Technician</th><th>Parts Used</th><th>Cost</th></tr></thead>
+    <tbody>${rows.map(h=>`<tr>
+      <td class="text-xs">${h.date}</td>
+      <td class="font-semibold text-sm">${eqName(h.equipmentId)}</td>
+      <td>${statusBadge(h.type)}</td>
+      <td class="text-sm">${h.description}</td>
+      <td class="text-sm">${h.technician}</td>
+      <td class="text-xs text-gray-600">${h.partsUsed}</td>
+      <td class="font-semibold text-sm">${fmtCost(h.cost)}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+/* ---- REPORTS & STATUS ---- */
+RENDERERS.reports=function(){
+  const byStatus={Running:[],  'Under Maintenance':[], Idle:[], Obsolete:[]};
+  DB.equipment.forEach(e=>{
+    const s=e.status==='Operational'?'Running':e.status==='Decommissioned'?'Obsolete':e.status;
+    if(byStatus[s]) byStatus[s].push(e);
+  });
+  const colors={Running:'green','Under Maintenance':'yellow',Idle:'gray',Obsolete:'orange'};
+
+  document.getElementById('pageContent').innerHTML=`
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+      <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <h3 class="font-semibold text-sm text-gray-900 mb-3">Equipment Status Breakdown</h3>
+        <canvas id="chartRepStatus" height="200"></canvas>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <h3 class="font-semibold text-sm text-gray-900 mb-3">Maintenance Cost Summary</h3>
+        <div class="space-y-3">
+          ${DB.equipment.map(e=>{
+            const cost=DB.history.filter(h=>h.equipmentId===e.id).reduce((s,h)=>s+h.cost,0);
+            return`<div class="flex justify-between items-center py-1 border-b border-gray-50">
+              <div><p class="text-sm font-medium text-gray-800">${e.name}</p><p class="text-xs text-gray-500">${e.id}</p></div>
+              <p class="font-bold text-sm text-gray-900">${fmtCost(cost)}</p>
+            </div>`;
+          }).join('')}
+          <div class="flex justify-between pt-1"><span class="font-bold text-sm">Total</span><span class="font-bold text-sm text-blue-700">${fmtCost(DB.history.reduce((s,h)=>s+h.cost,0))}</span></div>
+        </div>
+      </div>
+    </div>
+
+    ${Object.entries(byStatus).map(([status,eqs])=>eqs.length===0?'':
+      `<div class="bg-white rounded-xl border border-gray-200 overflow-hidden mb-4">
+        <div class="p-4 border-b border-gray-100 flex items-center gap-2">
+          ${statusBadge(status)}
+          <h3 class="font-semibold text-sm text-gray-900">${status} (${eqs.length})</h3>
+        </div>
+        <table><thead><tr><th>ID</th><th>Equipment</th><th>Location</th><th>Make / Model</th><th>Usage Hours</th><th>Lifespan</th><th>Last PM</th></tr></thead>
+        <tbody>${eqs.map(e=>{
+          const usageH=getUsageHours(e);
+          const lifePct=e.expectedLifespanHours?Math.min(100,Math.round(usageH/e.expectedLifespanHours*100)):0;
+          const lastPM=DB.pmSchedules.filter(p=>p.equipmentId===e.id&&p.lastDone).sort((a,b)=>b.lastDone.localeCompare(a.lastDone))[0]?.lastDone||'-';
+          return`<tr>
+            <td class="font-mono text-xs">${e.id}</td>
+            <td class="font-semibold text-sm">${e.name}</td>
+            <td class="text-sm">${e.location}</td>
+            <td class="text-sm">${e.manufacturer} / ${e.model}</td>
+            <td class="text-xs">${usageH.toLocaleString()} h</td>
+            <td class="text-xs">${lifePct}% used<div class="w-16 bg-gray-200 rounded-full h-1.5 mt-1"><div class="${lifePct>=90?'bg-red-500':lifePct>=70?'bg-yellow-500':'bg-green-500'} h-1.5 rounded-full" style="width:${lifePct}%"></div></div></td>
+            <td class="text-xs">${lastPM}</td>
+          </tr>`;
+        }).join('')}</tbody>
+        </table>
+      </div>`).join('')}`;
+
+  setTimeout(()=>{
+    mkChart('chartRepStatus',{type:'doughnut',data:{labels:Object.keys(byStatus),datasets:[{data:Object.values(byStatus).map(a=>a.length),backgroundColor:['#16a34a','#eab308','#9ca3af','#f97316']}]},options:{plugins:{legend:{position:'bottom'}},cutout:'55%'}});
+  },50);
+};
+
+/* ---- SPARES ---- */
+RENDERERS.spares=function(){
+  document.getElementById('pageContent').innerHTML=`
+    <div class="flex justify-between items-center mb-4">
+      <p class="text-sm text-gray-600">Inventory with low-stock alerts</p>
+      ${hasRole(['Admin','Maintenance'])?`<button onclick="spForm()" class="bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold">+ Add Part</button>`:''}
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <table>
+        <thead><tr><th>ID</th><th>Part Name</th><th>Equipment</th><th>Stock</th><th>Min</th><th>Consumed</th><th>Unit Cost</th><th>Status</th><th></th></tr></thead>
+        <tbody>${DB.spares.map(s=>`<tr>
+          <td class="font-mono text-xs">${s.id}</td>
+          <td class="font-semibold text-sm">${s.name}</td>
+          <td class="text-sm">${eqName(s.linkedEquipment)}</td>
+          <td class="font-bold text-sm ${s.stock<=s.minStock?'text-red-600':'text-green-700'}">${s.stock} ${s.unit}</td>
+          <td class="text-sm">${s.minStock}</td>
+          <td class="text-sm">${s.consumed}</td>
+          <td class="text-sm">${fmtCost(s.cost)}</td>
+          <td>${s.stock<=s.minStock?statusBadge('Overdue'):statusBadge('Valid')}</td>
+          <td class="flex gap-2">${hasRole(['Admin','Maintenance'])?`<button onclick="spConsume('${s.id}')" class="text-red-600 text-xs font-semibold hover:underline">Use</button><button onclick="spRestock('${s.id}')" class="text-green-700 text-xs font-semibold hover:underline">Restock</button>`:''}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+};
+function spForm(){
+  openModal('Add Spare Part',`
+    <form onsubmit="spSave(event)" class="space-y-3">
+      <div><label class="text-xs uppercase text-gray-600">Part Name</label><input name="name" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+      <div><label class="text-xs uppercase text-gray-600">Linked Equipment</label><select name="linkedEquipment" required class="w-full px-3 py-2 border rounded mt-1">${eqDropdown()}</select></div>
+      <div class="grid grid-cols-3 gap-3">
+        <div><label class="text-xs uppercase text-gray-600">Stock</label><input type="number" name="stock" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+        <div><label class="text-xs uppercase text-gray-600">Min Stock</label><input type="number" name="minStock" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+        <div><label class="text-xs uppercase text-gray-600">Unit</label><input name="unit" value="pcs" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+      </div>
+      <div><label class="text-xs uppercase text-gray-600">Cost / Unit (₹)</label><input type="number" name="cost" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+      <div class="flex justify-end gap-2"><button type="button" onclick="closeModal()" class="px-4 py-2 border rounded text-sm">Cancel</button><button class="bg-blue-700 text-white px-4 py-2 rounded text-sm">Save</button></div>
+    </form>`);
+}
+function spSave(ev){
+  ev.preventDefault(); const f=Object.fromEntries(new FormData(ev.target).entries());
+  DB.spares.push({id:'SP-'+String(DB.spares.length+1).padStart(3,'0'),...f,stock:Number(f.stock),minStock:Number(f.minStock),cost:Number(f.cost),consumed:0});
+  save(); closeModal(); navigate('spares'); refreshNotif();
+}
+function spConsume(id){ const n=Number(prompt('Qty to consume:','1')); if(!n||n<=0)return; const s=DB.spares.find(x=>x.id===id); s.stock=Math.max(0,s.stock-n); s.consumed+=n; save(); navigate('spares'); refreshNotif(); }
+function spRestock(id){ const n=Number(prompt('Qty to add:','5')); if(!n||n<=0)return; const s=DB.spares.find(x=>x.id===id); s.stock+=n; save(); navigate('spares'); refreshNotif(); }
+
+/* ---- LIFECYCLE ---- */
+RENDERERS.lifecycle=function(){
+  document.getElementById('pageContent').innerHTML=`
+    <p class="text-sm text-gray-600 mb-4">Track each asset from commissioning — usage hours, lifespan, and health</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      ${DB.equipment.map(e=>{
+        const usageH=getUsageHours(e);
+        const expectedH=e.expectedLifespanHours||0;
+        const lifePct=expectedH?Math.min(100,Math.round(usageH/expectedH*100)):0;
+        const remainH=Math.max(0,expectedH-usageH);
+        const totalCost=DB.history.filter(h=>h.equipmentId===e.id).reduce((s,h)=>s+h.cost,0);
+        const breakdownCount=DB.breakdowns.filter(b=>b.equipmentId===e.id).length;
+        const warrantyDays=diffDays(e.warrantyEnd);
+        const healthScore=Math.max(0,Math.min(100,100-breakdownCount*10-(warrantyDays<0?5:0)-(lifePct>80?15:lifePct>60?5:0)));
+        const barColor=lifePct>=90?'bg-red-500':lifePct>=70?'bg-yellow-500':'bg-green-500';
+        return`<div class="bg-white border rounded-xl p-5">
+          <div class="flex justify-between items-start mb-3">
+            <div><h4 class="font-bold text-gray-900 text-sm">${e.name}</h4><p class="text-xs text-gray-500">${e.id} · ${e.location}</p></div>
+            ${statusBadge(e.status)}
+          </div>
+          <div class="space-y-2 text-sm mb-3">
+            <div class="flex justify-between"><span class="text-gray-500">Commissioned</span><span class="font-medium">${e.commissioningDate||'-'}</span></div>
+            <div class="flex justify-between"><span class="text-gray-500">Purchase Cost</span><span class="font-medium">${fmtCost(e.cost)}</span></div>
+            <div class="flex justify-between"><span class="text-gray-500">Maintenance Spend</span><span class="font-medium">${fmtCost(totalCost)}</span></div>
+            <div class="flex justify-between"><span class="text-gray-500">Breakdowns</span><span class="font-medium">${breakdownCount}</span></div>
+            <div class="flex justify-between"><span class="text-gray-500">Warranty</span><span class="font-medium ${warrantyDays<0?'text-red-600':''}">${warrantyDays<0?'Expired':warrantyDays+' days left'}</span></div>
+          </div>
+          <div class="bg-gray-50 rounded-lg p-3 mb-3 text-xs">
+            <div class="flex justify-between mb-1"><span class="text-gray-600">Expected Lifespan</span><span class="font-semibold">${expectedH.toLocaleString()} h</span></div>
+            <div class="flex justify-between mb-1"><span class="text-gray-600">Usage Hours</span><span class="font-semibold ${lifePct>=90?'text-red-700':lifePct>=70?'text-yellow-700':'text-green-700'}">${usageH.toLocaleString()} h (${lifePct}%)</span></div>
+            <div class="flex justify-between"><span class="text-gray-600">Remaining</span><span class="font-semibold">${remainH.toLocaleString()} h</span></div>
+            <div class="w-full bg-gray-200 rounded-full h-2 mt-2"><div class="${barColor} h-2 rounded-full progress-bar" style="width:${lifePct}%"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between text-xs mb-1"><span class="text-gray-500">Health Score</span><span class="font-bold">${Math.round(healthScore)}/100</span></div>
+            <div class="w-full bg-gray-200 rounded-full h-1.5"><div class="${healthScore>70?'bg-green-500':healthScore>40?'bg-yellow-500':'bg-red-500'} h-1.5 rounded-full progress-bar" style="width:${healthScore}%"></div></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+};
+
+/* ---- DOCUMENTS ---- */
+RENDERERS.documents=function(){
+  document.getElementById('pageContent').innerHTML=`
+    <div class="flex justify-between items-center mb-4">
+      <p class="text-sm text-gray-600">Manuals, SOPs, certificates and contracts</p>
+      ${hasRole(['Admin','Maintenance'])?`<button onclick="docForm()" class="bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold">+ Upload Document</button>`:''}
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <table>
+        <thead><tr><th>Document</th><th>Type</th><th>Equipment</th><th>Uploaded</th><th>By</th></tr></thead>
+        <tbody>${DB.documents.map(d=>`<tr>
+          <td class="font-medium text-sm">📄 ${d.name}</td>
+          <td><span class="badge b-blue">${d.type}</span></td>
+          <td class="text-sm">${eqName(d.equipmentId)}</td>
+          <td class="text-xs">${d.uploadedDate}</td>
+          <td class="text-xs">${d.uploadedBy}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+};
+function docForm(){
+  openModal('Upload Document',`
+    <form onsubmit="docSave(event)" class="space-y-4">
+      <div><label class="text-xs uppercase text-gray-600">Document Name</label><input name="name" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+      <div><label class="text-xs uppercase text-gray-600">Type</label><select name="type" class="w-full px-3 py-2 border rounded mt-1">${['Manual','SOP','Calibration Certificate','AMC Contract','Warranty','Report','Other'].map(t=>`<option>${t}</option>`).join('')}</select></div>
+      <div><label class="text-xs uppercase text-gray-600">Equipment</label><select name="equipmentId" required class="w-full px-3 py-2 border rounded mt-1">${eqDropdown()}</select></div>
+      <p class="text-xs text-gray-400">Note: file content is stored as metadata only in this offline build.</p>
+      <div class="flex justify-end gap-2"><button type="button" onclick="closeModal()" class="px-4 py-2 border rounded text-sm">Cancel</button><button class="bg-blue-700 text-white px-4 py-2 rounded text-sm">Save</button></div>
+    </form>`);
+}
+function docSave(ev){
+  ev.preventDefault(); const f=Object.fromEntries(new FormData(ev.target).entries());
+  DB.documents.push({id:'D-'+String(DB.documents.length+1).padStart(3,'0'),...f,uploadedDate:todayISO(),uploadedBy:currentUser().name});
+  save(); closeModal(); navigate('documents');
+}
+
+/* ---- AMC ---- */
+RENDERERS.amc=function(){
+  document.getElementById('pageContent').innerHTML=`
+    <div class="flex justify-between items-center mb-4">
+      <p class="text-sm text-gray-600">External vendor contracts and service tracking</p>
+      ${hasRole(['Admin'])?`<button onclick="amcForm()" class="bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold">+ New AMC</button>`:''}
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+      <table>
+        <thead><tr><th>ID</th><th>Equipment</th><th>Vendor</th><th>Contact</th><th>Period</th><th>Value</th><th>Paid</th><th>Status</th></tr></thead>
+        <tbody>${DB.amcs.map(a=>{
+          const d=diffDays(a.endDate);
+          const status=d<0?'Expired':d<=30?'Expiring Soon':'Active';
+          return`<tr>
+            <td class="font-mono text-xs">${a.id}</td>
+            <td class="font-semibold text-sm">${eqName(a.equipmentId)}</td>
+            <td class="text-sm">${a.vendor}</td>
+            <td class="text-xs">${a.contact}</td>
+            <td class="text-xs">${a.startDate} → ${a.endDate}</td>
+            <td class="text-sm">${fmtCost(a.value)}</td>
+            <td class="text-sm">${fmtCost(a.paid)}<div class="text-xs ${a.paid<a.value?'text-orange-600':'text-green-600'}">${a.paid<a.value?'Bal: '+fmtCost(a.value-a.paid):'Fully Paid'}</div></td>
+            <td>${statusBadge(status)}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>`;
+};
+function amcForm(){
+  openModal('New AMC',`
+    <form onsubmit="amcSave(event)" class="space-y-3">
+      <div><label class="text-xs uppercase text-gray-600">Equipment</label><select name="equipmentId" required class="w-full px-3 py-2 border rounded mt-1">${eqDropdown()}</select></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs uppercase text-gray-600">Vendor</label><input name="vendor" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+        <div><label class="text-xs uppercase text-gray-600">Contact</label><input name="contact" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+        <div><label class="text-xs uppercase text-gray-600">Start Date</label><input type="date" name="startDate" value="${todayISO()}" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+        <div><label class="text-xs uppercase text-gray-600">End Date</label><input type="date" name="endDate" value="${daysFromNow(365)}" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+        <div><label class="text-xs uppercase text-gray-600">Value (₹)</label><input type="number" name="value" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+        <div><label class="text-xs uppercase text-gray-600">Paid (₹)</label><input type="number" name="paid" value="0" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+      </div>
+      <div class="flex justify-end gap-2"><button type="button" onclick="closeModal()" class="px-4 py-2 border rounded text-sm">Cancel</button><button class="bg-blue-700 text-white px-4 py-2 rounded text-sm">Save</button></div>
+    </form>`);
+}
+function amcSave(ev){
+  ev.preventDefault(); const f=Object.fromEntries(new FormData(ev.target).entries());
+  DB.amcs.push({id:'AMC-'+String(DB.amcs.length+1).padStart(3,'0'),...f,value:Number(f.value),paid:Number(f.paid),serviceCount:0,status:'Active'});
+  save(); closeModal(); navigate('amc'); refreshNotif();
+}
+
+/* ---- SCHEDULE ---- */
+RENDERERS.schedule=function(){
+  const today=new Date(); const start=new Date(today.getFullYear(),today.getMonth(),1);
+  const dim=new Date(today.getFullYear(),today.getMonth()+1,0).getDate();
+  const startDay=start.getDay();
+  const monthStr=today.toLocaleString('default',{month:'long',year:'numeric'});
+  const events={};
+  DB.pmSchedules.forEach(p=>{
+    if(p.nextDue&&p.nextDue.startsWith(today.toISOString().slice(0,7))){
+      const d=Number(p.nextDue.slice(8)); events[d]=events[d]||[];
+      events[d].push({type:'PM',label:eqName(p.equipmentId),color:'blue'});
+    }
+  });
+  DB.calibrations.forEach(c=>{
+    if(c.nextDue&&c.nextDue.startsWith(today.toISOString().slice(0,7))){
+      const d=Number(c.nextDue.slice(8)); events[d]=events[d]||[];
+      events[d].push({type:'CAL',label:eqName(c.equipmentId),color:'purple'});
+    }
+  });
+  let cells='';
+  for(let i=0;i<startDay;i++) cells+='<div class="border bg-gray-50 h-20"></div>';
+  for(let d=1;d<=dim;d++){
+    const ev=events[d]||[];
+    cells+=`<div class="border h-20 p-1 overflow-hidden ${d===today.getDate()?'bg-blue-50 border-blue-300':''}">
+      <div class="text-xs font-bold ${d===today.getDate()?'text-blue-700':''}">${d}</div>
+      ${ev.slice(0,2).map(e=>`<div class="text-xs px-1 py-0.5 mt-0.5 rounded bg-${e.color}-100 text-${e.color}-800 truncate leading-tight">${e.type}: ${e.label}</div>`).join('')}
+      ${ev.length>2?`<div class="text-xs text-gray-500">+${ev.length-2}</div>`:''}
+    </div>`;
+  }
+  document.getElementById('pageContent').innerHTML=`
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div class="lg:col-span-2 bg-white border rounded-xl p-5">
+        <h3 class="font-bold text-gray-900 mb-3">${monthStr}</h3>
+        <div class="grid grid-cols-7 text-xs font-semibold text-gray-500 mb-1">${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<div class="p-1">${d}</div>`).join('')}</div>
+        <div class="grid grid-cols-7">${cells}</div>
+        <div class="flex gap-4 mt-3 text-xs text-gray-500">
+          <div class="flex items-center gap-1"><div class="w-3 h-3 bg-blue-200 rounded"></div> PM</div>
+          <div class="flex items-center gap-1"><div class="w-3 h-3 bg-purple-200 rounded"></div> CAL</div>
+        </div>
+      </div>
+      <div class="bg-white border rounded-xl p-5">
+        <h3 class="font-bold text-gray-900 mb-3 text-sm">Technician Workload</h3>
+        <div class="space-y-3">${DB.technicians.map(t=>{
+          const c=DB.pmSchedules.filter(p=>p.assignedTo===t.id).length+DB.breakdowns.filter(b=>b.assignedTo===t.id&&b.status!=='Resolved').length;
+          return`<div>
+            <div class="flex justify-between text-sm mb-1"><span>${t.name}</span><span class="font-bold">${c} tasks</span></div>
+            <div class="bg-gray-200 rounded-full h-2"><div class="bg-blue-600 h-2 rounded-full" style="width:${Math.min(100,c*15)}%"></div></div>
+            <p class="text-xs text-gray-400">${t.dept}</p>
+          </div>`;
+        }).join('')}</div>
+      </div>
+    </div>`;
+};
+
+/* ---- AUDIT ---- */
+RENDERERS.audit=function(){
+  document.getElementById('pageContent').innerHTML=`
+    <div class="flex justify-between items-center mb-4">
+      <p class="text-sm text-gray-600">Audit checklists, scoring and CAPA tracking</p>
+      ${hasRole(['Admin','HOD'])?`<button onclick="auForm()" class="bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold">+ New Audit</button>`:''}
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <table>
+        <thead><tr><th>ID</th><th>Equipment</th><th>Date</th><th>Auditor</th><th>Score</th><th>Non-Conformances</th><th>CAPA</th><th>Status</th></tr></thead>
+        <tbody>${DB.audits.map(a=>`<tr>
+          <td class="font-mono text-xs">${a.id}</td>
+          <td class="font-semibold text-sm">${eqName(a.equipmentId)}</td>
+          <td class="text-xs">${a.date}</td>
+          <td class="text-sm">${a.auditor}</td>
+          <td><span class="font-bold text-sm ${a.score>=80?'text-green-700':a.score>=60?'text-yellow-700':'text-red-700'}">${a.score}/100</span></td>
+          <td class="text-sm">${a.nonConformances}</td>
+          <td class="text-xs max-w-xs truncate">${a.capa}</td>
+          <td>${statusBadge(a.status)}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+};
+function auForm(){
+  openModal('New Audit',`
+    <form onsubmit="auSave(event)" class="space-y-3">
+      <div><label class="text-xs uppercase text-gray-600">Equipment</label><select name="equipmentId" required class="w-full px-3 py-2 border rounded mt-1">${eqDropdown()}</select></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs uppercase text-gray-600">Score (0–100)</label><input type="number" name="score" min="0" max="100" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+        <div><label class="text-xs uppercase text-gray-600">Non-Conformances</label><input type="number" name="nonConformances" value="0" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+      </div>
+      <div><label class="text-xs uppercase text-gray-600">CAPA / Corrective Action</label><textarea name="capa" rows="2" class="w-full px-3 py-2 border rounded mt-1"></textarea></div>
+      <div><label class="text-xs uppercase text-gray-600">Status</label><select name="status" class="w-full px-3 py-2 border rounded mt-1"><option>Open</option><option>Closed</option></select></div>
+      <div class="flex justify-end gap-2"><button type="button" onclick="closeModal()" class="px-4 py-2 border rounded text-sm">Cancel</button><button class="bg-blue-700 text-white px-4 py-2 rounded text-sm">Save</button></div>
+    </form>`);
+}
+function auSave(ev){
+  ev.preventDefault(); const f=Object.fromEntries(new FormData(ev.target).entries());
+  DB.audits.push({id:'AU-'+String(DB.audits.length+1).padStart(3,'0'),...f,date:todayISO(),auditor:currentUser().name,score:Number(f.score),nonConformances:Number(f.nonConformances)});
+  save(); closeModal(); navigate('audit');
+}
+
+/* ---- USERS ---- */
+RENDERERS.users=function(){
+  document.getElementById('pageContent').innerHTML=`
+    <div class="flex justify-between items-center mb-4">
+      <p class="text-sm text-gray-600">Manage system users and roles</p>
+      <button onclick="usForm()" class="bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold">+ Add User</button>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden mb-5">
+      <table>
+        <thead><tr><th>Username</th><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead>
+        <tbody>${DB.users.map(u=>`<tr>
+          <td class="font-mono text-xs">${u.username}</td>
+          <td class="font-semibold text-sm">${u.name}</td>
+          <td class="text-sm">${u.email}</td>
+          <td><span class="badge b-blue">${u.role}</span></td>
+          <td>${u.id!==SESSION.userId?`<button onclick="usDel('${u.id}')" class="text-red-600 text-xs font-semibold hover:underline">Delete</button>`:''}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>
+    <div class="flex justify-between items-center mb-3">
+      <h3 class="font-semibold text-gray-900 text-sm">Technicians</h3>
+      <button onclick="addTechnicianModal('__none__')" class="bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold">+ Add Technician</button>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <table>
+        <thead><tr><th>ID</th><th>Name</th><th>Phone</th><th>Department</th><th></th></tr></thead>
+        <tbody>${DB.technicians.map(t=>`<tr>
+          <td class="font-mono text-xs">${t.id}</td>
+          <td class="font-semibold text-sm">${t.name}</td>
+          <td class="text-sm">${t.phone||'-'}</td>
+          <td class="text-sm">${t.dept||'-'}</td>
+          <td><button onclick="techDel('${t.id}')" class="text-red-600 text-xs font-semibold hover:underline">Delete</button></td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+};
+function usForm(){
+  openModal('Add User',`
+    <form onsubmit="usSave(event)" class="space-y-3">
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs uppercase text-gray-600">Username</label><input name="username" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+        <div><label class="text-xs uppercase text-gray-600">Password</label><input name="password" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+        <div><label class="text-xs uppercase text-gray-600">Full Name</label><input name="name" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+        <div><label class="text-xs uppercase text-gray-600">Email</label><input name="email" type="email" required class="w-full px-3 py-2 border rounded mt-1"/></div>
+      </div>
+      <div><label class="text-xs uppercase text-gray-600">Role</label><select name="role" class="w-full px-3 py-2 border rounded mt-1">${['Admin','Maintenance','Viewer','HOD'].map(r=>`<option>${r}</option>`).join('')}</select></div>
+      <div class="flex justify-end gap-2"><button type="button" onclick="closeModal()" class="px-4 py-2 border rounded text-sm">Cancel</button><button class="bg-blue-700 text-white px-4 py-2 rounded text-sm">Save</button></div>
+    </form>`);
+}
+function usSave(ev){
+  ev.preventDefault(); const f=Object.fromEntries(new FormData(ev.target).entries());
+  DB.users.push({id:'u'+(DB.users.length+1),...f});
+  save(); closeModal(); navigate('users');
+}
+function usDel(id){ if(!confirm('Delete user?'))return; DB.users=DB.users.filter(u=>u.id!==id); save(); navigate('users'); }
+function techDel(id){ if(!confirm('Delete technician?'))return; DB.technicians=DB.technicians.filter(t=>t.id!==id); save(); navigate('users'); }
+
+/* ================= INIT ================= */
+function initApp(){
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('appScreen').classList.remove('hidden');
+  const u=currentUser();
+  document.getElementById('userName').textContent=u.name;
+  document.getElementById('userRole').textContent=u.role;
+  document.getElementById('userAvatar').textContent=u.name.split(' ').map(n=>n[0]).join('').slice(0,2);
+  buildSidebar();
+  navigate('dashboard');
+  refreshNotif();
+  // Update running hours every minute
+  setInterval(()=>{ if(currentPage==='overview'||currentPage==='lifecycle'||currentPage==='reports') navigate(currentPage); },60000);
+}
+if(SESSION) initApp();
+</script>
+</body>
+</html>
